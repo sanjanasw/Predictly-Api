@@ -274,8 +274,8 @@ namespace Predictly_Api.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<float>("Sub1AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub1AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub1Class")
                         .HasColumnType("bit");
@@ -283,8 +283,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub1Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub2AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub2AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub2Class")
                         .HasColumnType("bit");
@@ -292,8 +292,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub2Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub3AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub3AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub3Class")
                         .HasColumnType("bit");
@@ -301,8 +301,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub3Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub4AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub4AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub4Class")
                         .HasColumnType("bit");
@@ -310,8 +310,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub4Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub5AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub5AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub5Class")
                         .HasColumnType("bit");
@@ -319,8 +319,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub5Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub6AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub6AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub6Class")
                         .HasColumnType("bit");
@@ -328,8 +328,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub6Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub7AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub7AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub7Class")
                         .HasColumnType("bit");
@@ -337,8 +337,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub7Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub8AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub8AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub8Class")
                         .HasColumnType("bit");
@@ -346,8 +346,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub8Hours")
                         .HasColumnType("int");
 
-                    b.Property<float>("Sub9AvgMarks")
-                        .HasColumnType("real");
+                    b.Property<bool>("Sub9AvgMarks")
+                        .HasColumnType("bit");
 
                     b.Property<bool>("Sub9Class")
                         .HasColumnType("bit");
