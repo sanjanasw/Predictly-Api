@@ -1,17 +1,15 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Threading.Tasks;
 using Predictly_Api.Enums;
+using Predictly_Api.Models;
 
-namespace Predictly_Api.ViewModels.User
+namespace Predictly_Api.ViewModels.Authentication
 {
-    public class UserViewModel
+    public class NewUserViewModel
     {
-        [Required(ErrorMessage = "Id is required")]
-        public string Id { get; set; }
-
-        [Required(ErrorMessage = "UserName is required")]
-        public string Username { get; set; }
-
         [Required(ErrorMessage = "First Name is required")]
         public string FirstName { get; set; }
 
@@ -21,9 +19,17 @@ namespace Predictly_Api.ViewModels.User
         [EmailAddress]
         [Required(ErrorMessage = "Email is required")]
         public string Email { get; set; }
+
+        [Required(ErrorMessage = "Gender is required")]
         public Genders Gender { get; set; }
+
         public int SchoolId { get; set; }
-        public int OLYear { get; set; } = 0;
-        public string Role { get; set; }
+
+        [Required(ErrorMessage = "UserName is required")]
+        public string Username { get; set; }
+
+        [Required(ErrorMessage = "UserRole is required")]
+        public UserRoles Role { get; set; }
+
     }
 }
