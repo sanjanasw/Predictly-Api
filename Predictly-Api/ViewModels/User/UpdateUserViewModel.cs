@@ -6,11 +6,8 @@ namespace Predictly_Api.ViewModels.User
 {
     public class UpdateUserViewModel
     {
-        [Required(ErrorMessage = "NIC is required")]
+        [Required(ErrorMessage = "Id is required")]
         public string Id { get; set; }
-
-        [Required(ErrorMessage = "NIC is required")]
-        public string NIC { get; set; }
 
         [Required(ErrorMessage = "UserName is required")]
         public string Username { get; set; }
@@ -24,16 +21,9 @@ namespace Predictly_Api.ViewModels.User
         [EmailAddress]
         [Required(ErrorMessage = "Email is required")]
         public string Email { get; set; }
-
-        [Required(ErrorMessage = "Phone Number is required")]
-        public string PhoneNumber { get; set; }
-
-        [Required(ErrorMessage = "Gender is required")]
         public Genders Gender { get; set; }
+        public int SchoolId { get; set; }
+        public int OLYear { get; set; } = 0;
 
-        [Required(ErrorMessage = "Birthday is required")]
-        public DateTime DOB { get; set; }
-
-        public string Role { get; set; }
     }
 }

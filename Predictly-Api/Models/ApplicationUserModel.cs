@@ -18,7 +18,7 @@ namespace Predictly_Api.Models
         public string LastName { get; set; }
 
         [PersonalData]
-        public Genders Gender { get; set; } = Genders.Male;
+        public Genders Gender { get; set; }
 
         [PersonalData]
         public int OLYear { get; set; } = 0;

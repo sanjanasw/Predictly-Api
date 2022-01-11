@@ -45,7 +45,6 @@ namespace Predictly_Api.Controllers
                     Username = c.UserName,
                     FirstName = c.FirstName,
                     LastName = c.LastName,
-                    PhoneNumber = c.PhoneNumber,
                     Gender = c.Gender,
                     Email = c.Email,
                     Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray())
@@ -81,7 +80,6 @@ namespace Predictly_Api.Controllers
                     Username = user.UserName,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber,
                     Gender = user.Gender,
                     Email = user.Email,
                     Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray())
@@ -95,7 +93,7 @@ namespace Predictly_Api.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> PutUser(string id, ApplicationUserModel model)
+        public async Task<ActionResult> PutUser(string id, UpdateUserViewModel model)
         {
             if (id != model.Id)
             {
@@ -105,16 +103,19 @@ namespace Predictly_Api.Controllers
             try
             {
                 var findUser = await _userManager.FindByIdAsync(id);
+
                 if (findUser == null)
                 {
                     return NotFound();
                 }
-                findUser.UserName = model.UserName;
+
+                findUser.UserName = model.Username;
                 findUser.FirstName = model.FirstName;
                 findUser.LastName = model.LastName;
-                findUser.PhoneNumber = model.PhoneNumber;
                 findUser.Gender = model.Gender;
                 findUser.Email = model.Email;
+                findUser.OLYear = model.OLYear;
+                findUser.SchoolId = model.SchoolId;
 
                 var result = await _userManager.UpdateAsync(findUser);
                 if (result.Succeeded)
@@ -127,9 +128,11 @@ namespace Predictly_Api.Controllers
                         Username = user.UserName,
                         FirstName = user.FirstName,
                         LastName = user.LastName,
-                        PhoneNumber = user.PhoneNumber,
                         Gender = user.Gender,
                         Email = user.Email,
+                        OLYear = user.OLYear,
+                        SchoolId = user.SchoolId,
+                        Role = string.Join(",", _userManager.GetRolesAsync(findUser).Result.ToArray())
                     });
                 }
                 else
@@ -191,7 +194,6 @@ namespace Predictly_Api.Controllers
                     Username = user.UserName,
                     FirstName = user.FirstName,
                     LastName = user.LastName,
-                    PhoneNumber = user.PhoneNumber,
                     Gender = user.Gender,
                     Email = user.Email,
                     Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray())
