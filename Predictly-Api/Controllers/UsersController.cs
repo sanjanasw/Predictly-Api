@@ -20,17 +20,19 @@ namespace Predictly_Api.Controllers
     public class UsersController : ControllerBase
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public UsersController(UserManager<ApplicationUserModel> userManager)
+        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context)
         {
             _userManager = userManager;
+            _context = context;
         }
 
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public ActionResult<IEnumerable<UserViewModel>> GetUsers(string role)
         {
-#nullable enable
+
             if (role != "Admin" && role != "Staff" && String.IsNullOrEmpty(role))
             {
                 role = "";
@@ -47,8 +49,9 @@ namespace Predictly_Api.Controllers
                     LastName = c.LastName,
                     Gender = c.Gender,
                     Email = c.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray())
-                }).Where(c => c.Role == role).ToList();
+                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                    StudyData = _context.StudyData.Where(x => x.UserId == c.Id).FirstOrDefault()
+            }).Where(c => c.Role == role).ToList();
 
                 if (users.Count < 1)
                 {
@@ -73,6 +76,7 @@ namespace Predictly_Api.Controllers
             try
             {
                 var user = _userManager.FindByIdAsync(id).Result;
+                var studyData = _context.StudyData.Where(x => x.UserId == id).FirstOrDefault();
 
                 return Ok(new UserViewModel
                 {
@@ -82,7 +86,10 @@ namespace Predictly_Api.Controllers
                     LastName = user.LastName,
                     Gender = user.Gender,
                     Email = user.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray())
+                    SchoolId = user.SchoolId,
+                    OLYear = user.OLYear,
+                    Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                    StudyData = studyData
                 });
             }
             catch (Exception)
@@ -187,7 +194,7 @@ namespace Predictly_Api.Controllers
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
                 var id = token.Claims.First(claim => claim.Type == "nameid").Value;
                 var user = _userManager.FindByIdAsync(id).Result;
-
+                var studyData = _context.StudyData.Where(x => x.UserId == id).FirstOrDefault();
                 return Ok(new UserViewModel
                 {
                     Id = user.Id,
@@ -196,7 +203,10 @@ namespace Predictly_Api.Controllers
                     LastName = user.LastName,
                     Gender = user.Gender,
                     Email = user.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray())
+                    SchoolId = user.SchoolId,
+                    OLYear = user.OLYear,
+                    Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                    StudyData = studyData
                 });
             }
             catch (Exception)

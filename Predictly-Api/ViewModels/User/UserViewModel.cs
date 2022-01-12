@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using Predictly_Api.Enums;
+using Predictly_Api.Models;
 
 namespace Predictly_Api.ViewModels.User
 {
@@ -25,5 +26,7 @@ namespace Predictly_Api.ViewModels.User
         public int SchoolId { get; set; }
         public int OLYear { get; set; } = 0;
         public string Role { get; set; }
+
+        public StudyDataModel StudyData { get; set; } = null;
     }
 }
