@@ -8,7 +8,7 @@ namespace Predictly_Api.ViewModels.Authentication
 {
     public class LoginViewModel
     {
-        [Required(ErrorMessage = "Email is required")]
+        [Required(ErrorMessage = "Username is required")]
         public string UserName { get; set; }
 
         [DataType(DataType.Password)]

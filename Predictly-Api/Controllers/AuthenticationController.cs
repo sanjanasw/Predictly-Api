@@ -131,6 +131,53 @@ namespace Predictly_Api.Controllers
             }
         }
 
+        [HttpPost]
+        [Route("school-register")]
+        public async Task<IActionResult> SchoolRegister([FromBody] SchoolRegisterViewModel model)
+        {
+            try
+            {
+                var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
+                var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
+                if (userExists != null || userEmailExists != null)
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User already exists!" });
+
+                ApplicationUserModel user = new()
+                {
+                    UserName = model.UserInfo.Username,
+                    FirstName = model.UserInfo.FirstName,
+                    LastName = model.UserInfo.LastName,
+                    Email = model.UserInfo.Email,
+                    Gender = model.UserInfo.Gender,
+                    SecurityStamp = Guid.NewGuid().ToString(),
+                };
+
+                var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
+
+                SchoolModel school = new()
+                {
+                    StaffUserId = user.Id,
+                    Name = model.SchoolInfo.Name,
+                    Address = model.SchoolInfo.Address
+                };
+
+                _context.School.Add(school);
+                _context.SaveChanges();
+
+                if (!result.Succeeded)
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                string confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user).Result;
+                sendEmail("verify", null, user, confirmationToken);
+                return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
         [HttpPost("confirm-email")]
         public IActionResult ConfirmEmail(ConfirmEmailViewModel model)
         {
