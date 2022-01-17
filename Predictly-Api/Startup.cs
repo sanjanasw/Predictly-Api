@@ -118,18 +118,20 @@ namespace Predictly_Api
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Predictly_Api v1"));
             }
 
             app.UseHttpsRedirection();
 
             app.UseRouting();
 
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Predictly API");
+            });
+
             app.UseAuthentication();
             app.UseAuthorization();
-
-            app.UseCors();
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
