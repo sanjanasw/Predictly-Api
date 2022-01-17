@@ -154,6 +154,13 @@ namespace Predictly_Api.Controllers
 
                 var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
 
+                if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
+                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                {
+                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
+                }
+
                 SchoolModel school = new()
                 {
                     StaffUserId = user.Id,
@@ -238,7 +245,7 @@ namespace Predictly_Api.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
-                SchoolId = model.SchoolId,
+                SchoolId = 0,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
             var result = await _userManager.CreateAsync(user, "$NewUserPassword1Temp");
@@ -247,26 +254,13 @@ namespace Predictly_Api.Controllers
 
             if (!await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin.ToString()));
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
-
-            if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Admin)
-            {
 
                 if (await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
                 {
                     await _userManager.AddToRoleAsync(user, UserRoles.Admin.ToString());
                 }
-            }
-            else if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Staff)
-            {
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
-                }
-            }
             var token = _userManager.GeneratePasswordResetTokenAsync(user).Result;
+
             sendEmail("newUser", null, user, token);
             return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
         }
