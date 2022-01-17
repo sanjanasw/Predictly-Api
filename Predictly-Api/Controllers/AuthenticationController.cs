@@ -231,7 +231,7 @@ namespace Predictly_Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        [Route("admin-creation")]
+        [Route("admin-account-create")]
         public async Task<IActionResult> NewUser([FromBody] NewUserViewModel model)
         {
             var userExists = await _userManager.FindByNameAsync(model.Username);
