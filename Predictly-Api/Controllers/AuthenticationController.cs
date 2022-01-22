@@ -73,14 +73,14 @@ namespace Predictly_Api.Controllers
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     id = user.Id,
-                    userName = user.UserName,
-                    emailConfirmStatus = user.EmailConfirmed,
-                    deleteStatus = user.DeleteStatus,
+                    name = user.FirstName + ' ' + user.LastName,
+                    username = user.UserName,
+                    email = user.Email,
+                    school = user.SchoolId,
                     role = userRoles,
-                    expiration = token.ValidTo
                 });
             }
-            return Unauthorized();
+            return Unauthorized(new ResponseModel { Status = "401", Message = "Username or password incorrec!" });
         }
 
         [HttpPost]
@@ -303,7 +303,7 @@ namespace Predictly_Api.Controllers
                          {message}";
                         break;
                     case "resetPass":
-                        verifyUrl = $"{Request.Headers["origin"]}/account/reset-password?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"http://localhost:4200/auth/reset-password?userid={_user.Id}&token={_token}";
                         message = $@"<p>Please click the below link to reset your password:</p>
                              <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
                         subject = "Predictly - Reset password";
