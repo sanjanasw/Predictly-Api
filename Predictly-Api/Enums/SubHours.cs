@@ -5,7 +5,8 @@
 
         lessThan3,
         between3n5,
-        greaterThan5
+        between5n10,
+        morethan10
 
     }
 }
