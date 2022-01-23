@@ -91,8 +91,14 @@ namespace Predictly_Api.Controllers
             {
                 var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
                 var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                if (userExists != null || userEmailExists != null)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User already exists!" });
+                if (userExists != null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                }
+                else if (userEmailExists != null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                }
 
                 ApplicationUserModel user = new()
                 {
@@ -139,8 +145,14 @@ namespace Predictly_Api.Controllers
             {
                 var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
                 var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                if (userExists != null || userEmailExists != null)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User already exists!" });
+                if (userExists != null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                }
+                else if (userEmailExists != null)
+                {
+                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                }
 
                 ApplicationUserModel user = new()
                 {
