@@ -295,7 +295,7 @@ namespace Predictly_Api.Controllers
                 switch (_type)
                 {
                     case "verify":
-                        verifyUrl = $"{Request.Headers["origin"]}/account/confirm-email?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"http://localhost:4200/auth/confirm-email?userid={_user.Id}&token={_token}";
                         message = $@"<p>Please click the below link to verify your email address:</p>
                              <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
                         subject = "Predictly Signup - Verify Email";
