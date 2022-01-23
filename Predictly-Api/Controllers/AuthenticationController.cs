@@ -14,6 +14,7 @@ using Predictly_Api.Enums;
 using Predictly_Api.ViewModels.Authentication;
 using Predictly_Api.Services;
 using Microsoft.AspNetCore.Authorization;
+using System.Linq;
 
 namespace Predictly_Api.Controllers
 {
@@ -44,6 +45,16 @@ namespace Predictly_Api.Controllers
             var user = await _userManager.FindByNameAsync(model.UserName);
             if (user != null && !user.DeleteStatus && await _userManager.CheckPasswordAsync(user, model.Password))
             {
+                if (!user.EmailConfirmed)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Please verify your email!" });
+                }
+
+                if (user.DeleteStatus)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Your account is blocked by admins. Please contact us ASAP!" });
+                }
+
                 var userRoles = await _userManager.GetRolesAsync(user);
 
                 var authClaims = new List<Claim>
@@ -69,6 +80,8 @@ namespace Predictly_Api.Controllers
                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
                     );
 
+                var school = _context.School.Where(x => x.Id == user.SchoolId).Select(x => x.Name).FirstOrDefault();
+
                 return Ok(new
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
@@ -76,11 +89,11 @@ namespace Predictly_Api.Controllers
                     name = user.FirstName + ' ' + user.LastName,
                     username = user.UserName,
                     email = user.Email,
-                    school = user.SchoolId,
+                    school = school,
                     role = userRoles,
                 });
             }
-            return Unauthorized(new ResponseModel { Status = "401", Message = "Username or password incorrec!" });
+            return Unauthorized(new ResponseModel { Status = "401", Message = "Username or password incorrect!" });
         }
 
         [HttpPost]
