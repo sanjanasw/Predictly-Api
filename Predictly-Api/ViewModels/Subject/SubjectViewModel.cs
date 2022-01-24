@@ -4,13 +4,13 @@ namespace Predictly_Api.ViewModels.Subject
 {
     public class SubjectViewModel
     {
-        public List<SubjectDataModel> CoreSubjects { get; set; }
-        public List<SubjectDataModel> Bucket1 { get; set; }
-        public List<SubjectDataModel> Bucket2 { get; set; }
-        public List<SubjectDataModel> Bucket3 { get; set; }
+        public List<SubjectDataViewModel> CoreSubjects { get; set; }
+        public List<SubjectDataViewModel> Bucket1 { get; set; }
+        public List<SubjectDataViewModel> Bucket2 { get; set; }
+        public List<SubjectDataViewModel> Bucket3 { get; set; }
     }
 
-    public class SubjectDataModel
+    public class SubjectDataViewModel
     {
         public int Id { get; set; }
         public string Name { get; set; }

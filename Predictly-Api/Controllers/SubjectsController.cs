@@ -22,10 +22,10 @@ namespace Predictly_Api.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<SubjectViewModel>> GetSchools()
         {
-            var core = _context.Subjects.Where(x => x.BucketType ==0).Select(x => new SubjectModel { Id = x.Id, Name = x.Name }).ToList();
-            var B1 = _context.Subjects.Where(x => x.BucketType == 1).Select(x => new SubjectModel { Id = x.Id, Name = x.Name }).ToList();
-            var B2 = _context.Subjects.Where(x => x.BucketType == 2).Select(x => new SubjectModel { Id = x.Id, Name = x.Name }).ToList();
-            var B3 = _context.Subjects.Where(x => x.BucketType == 3).Select(x => new SubjectModel { Id = x.Id, Name = x.Name }).ToList();
+            var core = _context.Subjects.Where(x => x.BucketType ==0).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
+            var B1 = _context.Subjects.Where(x => x.BucketType == 1).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
+            var B2 = _context.Subjects.Where(x => x.BucketType == 2).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
+            var B3 = _context.Subjects.Where(x => x.BucketType == 3).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
             return Ok(new SubjectViewModel { CoreSubjects = core, Bucket1 = B1, Bucket2 = B2, Bucket3 = B3 });
         }
     }
