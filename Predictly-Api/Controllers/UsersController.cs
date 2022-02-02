@@ -11,6 +11,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
+using Microsoft.EntityFrameworkCore;
 
 namespace Predictly_Api.Controllers
 {
@@ -33,25 +34,43 @@ namespace Predictly_Api.Controllers
         public ActionResult<IEnumerable<UserViewModel>> GetUsers(string role)
         {
 
-            if (role != "Admin" && role != "Staff" && String.IsNullOrEmpty(role))
+            if (role != "admin" && role != "staff" && String.IsNullOrEmpty(role))
             {
                 role = "";
             }
             try
             {
                 var usersList = _userManager.Users.ToList();
+                var users = new List<UserViewModel>();
 
-                var users = usersList.Where(u => !u.DeleteStatus).Select(c => new UserViewModel
+                if (role == "")
                 {
-                    Id = c.Id,
-                    Username = c.UserName,
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
-                    Gender = c.Gender,
-                    Email = c.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                    StudyData = _context.StudyData.Where(x => x.UserId == c.Id).FirstOrDefault()
-            }).Where(c => c.Role == role).ToList();
+                    users = usersList.Where(u => !u.DeleteStatus).Select(c => new UserViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                        StudyData = _context.StudyData.Where(x => x.UserId.Equals(c.Id)).FirstOrDefault(),
+                    }).Where(c => c.Role.ToLower() == role).ToList();
+                }
+                else
+                {
+
+                    users = usersList.Where(u => !u.DeleteStatus).Select(c => new UserViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray())
+                    }).Where(c => c.Role.ToLower() == role).ToList();
+                }
 
                 if (users.Count < 1)
                 {
@@ -193,7 +212,13 @@ namespace Predictly_Api.Controllers
                 var accessToken = await HttpContext.GetTokenAsync("access_token");
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
                 var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
                 var user = _userManager.FindByIdAsync(id).Result;
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
                 var studyData = _context.StudyData.Where(x => x.UserId == id).FirstOrDefault();
                 return Ok(new UserViewModel
                 {
@@ -213,6 +238,34 @@ namespace Predictly_Api.Controllers
             {
 
                 return BadRequest();
+            }
+        }
+
+        [HttpPut("study-data")]
+        public async Task<ActionResult> PutStudyData(StudyDataModel model)
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                model.UserId = user.Id;
+
+                _context.Entry(model).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+                return Ok(new ResponseModel { Status = "Success", Message = "Study data update successfully!" });
+
+            }
+            catch (Exception)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
             }
         }
     }
