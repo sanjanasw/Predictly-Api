@@ -300,7 +300,7 @@ namespace Predictly_Api.Controllers
 
             if (!result.Succeeded)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
+                return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid or password doesn't meet the requirements!" });
             }
 
             sendEmail("newUserSetup", user.Email, null, null);

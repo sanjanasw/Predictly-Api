@@ -3,15 +3,17 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Predictly_Api.Models;
 
 namespace Predictly_Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20220124174227_subject table")]
+    partial class subjecttable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -274,8 +276,8 @@ namespace Predictly_Api.Migrations
                     b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
-                    b.Property<double>("Sub1AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub1AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub1Class")
                         .HasColumnType("bit");
@@ -283,8 +285,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub1Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub2AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub2AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub2Class")
                         .HasColumnType("bit");
@@ -292,8 +294,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub2Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub3AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub3AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub3Class")
                         .HasColumnType("bit");
@@ -301,8 +303,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub3Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub4AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub4AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub4Class")
                         .HasColumnType("bit");
@@ -310,8 +312,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub4Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub5AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub5AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub5Class")
                         .HasColumnType("bit");
@@ -319,8 +321,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub5Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub6AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub6AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub6Class")
                         .HasColumnType("bit");
@@ -328,8 +330,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub6Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub7AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub7AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub7Class")
                         .HasColumnType("bit");
@@ -337,8 +339,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub7Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub8AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub8AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub8Class")
                         .HasColumnType("bit");
@@ -346,8 +348,8 @@ namespace Predictly_Api.Migrations
                     b.Property<int>("Sub8Hours")
                         .HasColumnType("int");
 
-                    b.Property<double>("Sub9AvgMarks")
-                        .HasColumnType("float");
+                    b.Property<float>("Sub9AvgMarks")
+                        .HasColumnType("real");
 
                     b.Property<bool>("Sub9Class")
                         .HasColumnType("bit");

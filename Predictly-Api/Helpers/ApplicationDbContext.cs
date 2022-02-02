@@ -22,5 +22,6 @@ namespace Predictly_Api.Models
 
         public DbSet<StudyDataModel> StudyData { get; set; }
         public DbSet<SchoolModel> School { get; set; }
+        public DbSet<SubjectModel> Subjects { get; set; }
     }
 }
