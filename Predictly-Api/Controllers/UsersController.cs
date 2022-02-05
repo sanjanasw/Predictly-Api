@@ -29,7 +29,7 @@ namespace Predictly_Api.Controllers
             _context = context;
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Staff")]
         [HttpGet]
         public ActionResult<IEnumerable<UserViewModel>> GetUsers(string role)
         {
@@ -54,7 +54,6 @@ namespace Predictly_Api.Controllers
                         Gender = c.Gender,
                         Email = c.Email,
                         Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                        StudyData = _context.StudyData.Where(x => x.UserId.Equals(c.Id)).FirstOrDefault(),
                     }).Where(c => c.Role.ToLower() == role).ToList();
                 }
                 else
@@ -108,7 +107,6 @@ namespace Predictly_Api.Controllers
                     SchoolId = user.SchoolId,
                     OLYear = user.OLYear,
                     Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
-                    StudyData = studyData
                 });
             }
             catch (Exception)
@@ -231,7 +229,6 @@ namespace Predictly_Api.Controllers
                     SchoolId = user.SchoolId,
                     OLYear = user.OLYear,
                     Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
-                    StudyData = studyData
                 });
             }
             catch (Exception)
@@ -239,6 +236,54 @@ namespace Predictly_Api.Controllers
 
                 return BadRequest();
             }
+        }
+
+        [Authorize(Roles = "Staff")]
+        [HttpGet("students")]
+        public async Task<ActionResult<StudentViewModel>> GetStudents()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                var usersList = _userManager.Users.ToList();
+                var users = new List<StudentViewModel>();
+                    users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StudentViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                        OLYear = c.OLYear,
+                        SchoolId = c.SchoolId,
+                    }).Where(c => c.Role.ToLower() == "").ToList();
+
+                if (users.Count < 1)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    return Ok(users);
+                }
+            }
+            catch (Exception)
+            {
+
+                return BadRequest();
+            }
+
         }
 
         [HttpPut("study-data")]
