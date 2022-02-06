@@ -15,6 +15,7 @@ using Predictly_Api.ViewModels.Authentication;
 using Predictly_Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
+using Predictly_Api.ViewModels.User;
 
 namespace Predictly_Api.Controllers
 {
@@ -78,7 +79,7 @@ namespace Predictly_Api.Controllers
                     expires: DateTime.Now.AddHours(3),
                     claims: authClaims,
                     signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                    );
+                 );
 
                 var school = _context.School.Where(x => x.Id == user.SchoolId).Select(x => x.Name).FirstOrDefault();
 
@@ -89,6 +90,7 @@ namespace Predictly_Api.Controllers
                     name = user.FirstName + ' ' + user.LastName,
                     username = user.UserName,
                     email = user.Email,
+                    schoolId = user.SchoolId,
                     school = school,
                     role = userRoles,
                 });
@@ -256,8 +258,8 @@ namespace Predictly_Api.Controllers
 
         [Authorize(Roles = "Admin")]
         [HttpPost]
-        [Route("admin-account-create")]
-        public async Task<IActionResult> NewUser([FromBody] NewUserViewModel model)
+        [Route("force-onboard")]
+        public async Task<ActionResult<StafftViewModel>> NewUser([FromBody] NewUserViewModel model)
         {
             var userExists = await _userManager.FindByNameAsync(model.Username);
             var userEmailExists = await _userManager.FindByEmailAsync(model.Email);
@@ -270,24 +272,55 @@ namespace Predictly_Api.Controllers
                 FirstName = model.FirstName,
                 LastName = model.LastName,
                 Email = model.Email,
-                SchoolId = 0,
+                SchoolId = model.SchoolId,
                 SecurityStamp = Guid.NewGuid().ToString(),
             };
+
             var result = await _userManager.CreateAsync(user, "$NewUserPassword1Temp");
             if (!result.Succeeded)
                 return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
 
             if (!await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
                 await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin.ToString()));
+            if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
+            if (!await _roleManager.RoleExistsAsync(UserRoles.User.ToString()))
+                await _roleManager.CreateAsync(new IdentityRole(UserRoles.User.ToString()));
+
+            if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Admin)
+            {
 
                 if (await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
                 {
                     await _userManager.AddToRoleAsync(user, UserRoles.Admin.ToString());
                 }
+            }
+            else if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Staff)
+            {
+
+                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                {
+                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
+                }
+            }
+
             var token = _userManager.GeneratePasswordResetTokenAsync(user).Result;
 
+            var userResponse = new StafftViewModel
+            {
+                Id = user.Id,
+                Username = user.UserName,
+                FirstName = user.FirstName,
+                LastName = user.LastName,
+                Gender = user.Gender,
+                Email = user.Email,
+                Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                isActive = user.EmailConfirmed,
+                SchoolId = user.SchoolId,
+            };
+
             sendEmail("newUser", null, user, token);
-            return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
+            return Ok(userResponse);
         }
 
         [HttpPost("new-user-setup")]
@@ -307,7 +340,7 @@ namespace Predictly_Api.Controllers
             return Ok(new ResponseModel { Status = "Success", Message = "New User Setup Successfull!" });
         }
 
-        private void sendEmail(string _type, string? _email, ApplicationUserModel? _user, string? _token)
+        private void sendEmail(string _type, string _email = null, ApplicationUserModel _user = null, string _token =  null)
         {
             string message;
             string subject = "";
@@ -320,7 +353,7 @@ namespace Predictly_Api.Controllers
                 switch (_type)
                 {
                     case "verify":
-                        verifyUrl = $"http://localhost:4200/auth/confirm-email?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/confirm-email?userid={_user.Id}&token={_token}";
                         message = $@"<p>Please click the below link to verify your email address:</p>
                              <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
                         subject = "Predictly Signup - Verify Email";
@@ -328,7 +361,7 @@ namespace Predictly_Api.Controllers
                          {message}";
                         break;
                     case "resetPass":
-                        verifyUrl = $"http://localhost:4200/auth/reset-password?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
                         message = $@"<p>Please click the below link to reset your password:</p>
                              <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
                         subject = "Predictly - Reset password";
@@ -348,7 +381,7 @@ namespace Predictly_Api.Controllers
                          {message}";
                         break;
                     case "newUser":
-                        verifyUrl = $"{Request.Headers["origin"]}/account/reset-password?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/new-user-setup?userid={_user.Id}&token={_token}";
                         message = $@"<p>Please click the below link to set password to your account:</p>
                              <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
                         subject = "Predictly - New User Invitation";
