@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
 using Microsoft.EntityFrameworkCore;
+using Predictly_Api.Enums;
 
 namespace Predictly_Api.Controllers
 {
@@ -27,65 +28,6 @@ namespace Predictly_Api.Controllers
         {
             _userManager = userManager;
             _context = context;
-        }
-
-        [Authorize(Roles = "Admin,Staff")]
-        [HttpGet]
-        public ActionResult<IEnumerable<UserViewModel>> GetUsers(string role)
-        {
-
-            if (role != "admin" && role != "staff" && String.IsNullOrEmpty(role))
-            {
-                role = "";
-            }
-            try
-            {
-                var usersList = _userManager.Users.ToList();
-                var users = new List<UserViewModel>();
-
-                if (role == "")
-                {
-                    users = usersList.Where(u => !u.DeleteStatus).Select(c => new UserViewModel
-                    {
-                        Id = c.Id,
-                        Username = c.UserName,
-                        FirstName = c.FirstName,
-                        LastName = c.LastName,
-                        Gender = c.Gender,
-                        Email = c.Email,
-                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                    }).Where(c => c.Role.ToLower() == role).ToList();
-                }
-                else
-                {
-
-                    users = usersList.Where(u => !u.DeleteStatus).Select(c => new UserViewModel
-                    {
-                        Id = c.Id,
-                        Username = c.UserName,
-                        FirstName = c.FirstName,
-                        LastName = c.LastName,
-                        Gender = c.Gender,
-                        Email = c.Email,
-                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray())
-                    }).Where(c => c.Role.ToLower() == role).ToList();
-                }
-
-                if (users.Count < 1)
-                {
-                    return BadRequest();
-                }
-                else
-                {
-                    return Ok(users);
-                }
-            }
-            catch (Exception)
-            {
-
-                return BadRequest();
-            }
-
         }
 
         [HttpGet("{id}")]
@@ -238,8 +180,8 @@ namespace Predictly_Api.Controllers
             }
         }
 
-        [Authorize(Roles = "Staff")]
-        [HttpGet("students")]
+        [Authorize(Roles = "Admin, Staff")]
+        [HttpGet("student")]
         public async Task<ActionResult<StudentViewModel>> GetStudents()
         {
             try
@@ -268,6 +210,54 @@ namespace Predictly_Api.Controllers
                         OLYear = c.OLYear,
                         SchoolId = c.SchoolId,
                     }).Where(c => c.Role.ToLower() == "").ToList();
+
+                if (users.Count < 1)
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    return Ok(users);
+                }
+            }
+            catch (Exception)
+            {
+
+                return BadRequest();
+            }
+
+        }
+
+        [Authorize(Roles = "Admin, Staff")]
+        [HttpGet("staff")]
+        public async Task<ActionResult<StafftViewModel>> GetStaff()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = _userManager.FindByIdAsync(id).Result;
+                if (user == null)
+                {
+                    return NotFound();
+                }
+
+                var usersList = _userManager.Users.ToList();
+                var users = new List<StafftViewModel>();
+                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StafftViewModel
+                {
+                    Id = c.Id,
+                    Username = c.UserName,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Gender = c.Gender,
+                    Email = c.Email,
+                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                    isActive = c.EmailConfirmed,
+                    SchoolId = c.SchoolId,
+                }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
 
                 if (users.Count < 1)
                 {
