@@ -18,9 +18,12 @@ using Predictly_Api.Models;
 using Predictly_Api.Services;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
+using VMS_API.Helpers.Filters;
 
 namespace Predictly_Api
 {
@@ -83,38 +86,21 @@ namespace Predictly_Api
             // configure DI for application services
             services.AddScoped<IEmailService, EmailService>();
 
+            //Swagger
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Predictly_Api", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "PREDICTLY-API", Version = "v1.0" });
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n 
-                      Enter 'Bearer' [space] and then your token in the text input below.
-                      \r\n\r\nExample: 'Bearer 12345abcdef'",
+                    Description = @"Example: 'Bearer [token]'",
                     Name = "Authorization",
                     In = ParameterLocation.Header,
                     Type = SecuritySchemeType.ApiKey,
                     Scheme = "Bearer"
                 });
-
-                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
-                {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                    Reference = new OpenApiReference
-                        {
-                        Type = ReferenceType.SecurityScheme,
-                        Id = "Bearer"
-                        },
-                        Scheme = "oauth2",
-                        Name = "Bearer",
-                        In = ParameterLocation.Header,
-
-                    },
-                    new List<string>()
-                    }
-                });
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                c.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+                c.OperationFilter<AuthResponsesOperationFilter>();
             });
         }
 
@@ -135,7 +121,7 @@ namespace Predictly_Api
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Predictly API");
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Version 1.0");
             });
 
             app.UseAuthentication();
