@@ -19,6 +19,7 @@ using Predictly_Api.ViewModels.User;
 using VMS_API.ViewModels.Authentication;
 using Microsoft.AspNetCore.Authentication;
 using System.Net.Mime;
+using Microsoft.Extensions.Logging;
 
 namespace Predictly_Api.Controllers
 {
@@ -33,14 +34,17 @@ namespace Predictly_Api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
+        private readonly ILogger<AuthenticateController> _logger;
 
-        public AuthenticateController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context, IConfiguration configuration, IEmailService emailService)
+        public AuthenticateController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context,
+            IConfiguration configuration, IEmailService emailService, ILogger<AuthenticateController> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
             _context = context;
             _configuration = configuration;
             _emailService = emailService;
+            _logger = logger;
         }
 
         /// <summary>
@@ -70,12 +74,14 @@ namespace Predictly_Api.Controllers
                 {
                     if (!user.EmailConfirmed)
                     {
+                        _logger.LogWarning(string.Format("{0} is tried loggin to the system with out confirming email.", user.FirstName + " " + user.LastName));
                         return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Please verify your email!" });
                     }
 
                     if (user.DeleteStatus)
                     {
-                        return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Your account is blocked by admins. Please contact us ASAP!" });
+                        _logger.LogWarning(string.Format("{0} deleted user is tried loggin to the system.", user.FirstName + " " + user.LastName));
+                        return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Your account is deleted by admins. Please contact us ASAP!" });
                     }
 
                     var userRoles = await _userManager.GetRolesAsync(user);
@@ -105,6 +111,7 @@ namespace Predictly_Api.Controllers
 
                     var school = _context.School.Where(x => x.Id == user.SchoolId).Select(x => x.Name).FirstOrDefault();
 
+                    _logger.LogInformation(string.Format("{0} logged in to the system", user.UserName));
                     return Ok(new LoginResponseViewModel
                     {
                         Token = new JwtSecurityTokenHandler().WriteToken(token),
@@ -117,11 +124,12 @@ namespace Predictly_Api.Controllers
                         Role = (List<string>)userRoles,
                     });
                 }
-                return Unauthorized(new ResponseModel { Status = "401", Message = "Username or password incorrect!" });
+                _logger.LogWarning(string.Format("{0} Invalid login attempt.", model.UserName));
+                return Unauthorized(new ResponseModel { Status = "Unauthorized", Message = "Username or password incorrect!" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/login.");
                 throw;
             }
         }
@@ -182,59 +190,66 @@ namespace Predictly_Api.Controllers
         ///
         /// </remarks>
         /// <response code="200">Returns success message</response>
-        /// <response code="400">Username or email already exists</response>
+        /// <response code="409">Username or email already exists</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
         [Route("register")]
         public async Task<ActionResult<ResponseModel>> Register([FromBody] RegisterViewModel model)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
-                var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                if (userExists != null)
+                try
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (userExists != null)
+                    {
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    }
+                    else if (userEmailExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    }
+
+                    ApplicationUserModel user = new()
+                    {
+                        UserName = model.UserInfo.Username,
+                        FirstName = model.UserInfo.FirstName,
+                        LastName = model.UserInfo.LastName,
+                        Email = model.UserInfo.Email,
+                        Gender = model.UserInfo.Gender,
+                        SchoolId = model.UserInfo.SchoolId,
+                        FathersEduLevel = model.UserInfo.FathersEduLevel,
+                        MothersEduLevel = model.UserInfo.MothersEduLevel,
+                        BSub1 = model.UserInfo.BSub1,
+                        BSub2 = model.UserInfo.BSub2,
+                        BSub3 = model.UserInfo.BSub3,
+                        OLYear = model.UserInfo.OLYear,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                    };
+                    var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
+
+                    model.StudyData.UserId = user.Id;
+
+                    _context.StudyData.Add(model.StudyData);
+                    _context.SaveChanges();
+                    await transaction.CommitAsync();
+
+                    if (!result.Succeeded)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    SendEmail("verify", null, user, confirmationToken);
+                    _logger.LogInformation(string.Format("{0} new student registered.", user.UserName));
+                    return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
                 }
-                else if (userEmailExists != null)
+                catch (Exception ex)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in auth/register.");
+                    throw;
                 }
-
-                ApplicationUserModel user = new()
-                {
-                    UserName = model.UserInfo.Username,
-                    FirstName = model.UserInfo.FirstName,
-                    LastName = model.UserInfo.LastName,
-                    Email = model.UserInfo.Email,
-                    Gender = model.UserInfo.Gender,
-                    SchoolId = model.UserInfo.SchoolId,
-                    FathersEduLevel = model.UserInfo.FathersEduLevel,
-                    MothersEduLevel = model.UserInfo.MothersEduLevel,
-                    BSub1 = model.UserInfo.BSub1,
-                    BSub2 = model.UserInfo.BSub2,
-                    BSub3 = model.UserInfo.BSub3,
-                    OLYear = model.UserInfo.OLYear,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                };
-                var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
-
-                model.StudyData.UserId = user.Id;
-
-                _context.StudyData.Add(model.StudyData);
-                _context.SaveChanges();
-
-                if (!result.Succeeded)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
-                string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                SendEmail("verify", null, user, confirmationToken);
-                return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
-            }
-            catch (Exception)
-            {
-
-                throw;
             }
         }
 
@@ -262,65 +277,72 @@ namespace Predictly_Api.Controllers
         ///
         /// </remarks>
         /// <response code="200">Returns success message</response>
-        /// <response code="400">Username or email already exists</response>
+        /// <response code="409">Username or email already exists</response>
         /// <response code="500">Internal server error</response>
         [HttpPost]
         [Route("school-register")]
         public async Task<ActionResult<ResponseModel>> SchoolRegister([FromBody] SchoolRegisterViewModel model)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
-                var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                if (userExists != null)
+                try
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (userExists != null)
+                    {
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    }
+                    else if (userEmailExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    }
+
+                    ApplicationUserModel user = new()
+                    {
+                        UserName = model.UserInfo.Username,
+                        FirstName = model.UserInfo.FirstName,
+                        LastName = model.UserInfo.LastName,
+                        Email = model.UserInfo.Email,
+                        Gender = model.UserInfo.Gender,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                    };
+
+                    var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
+
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
+                    if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                    {
+                        await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
+                    }
+
+                    SchoolModel school = new()
+                    {
+                        StaffUserId = user.Id,
+                        Name = model.SchoolInfo.Name,
+                        Address = model.SchoolInfo.Address
+                    };
+
+                    _context.School.Add(school);
+                    _context.SaveChanges();
+                    await transaction.CommitAsync();
+
+                    if (!result.Succeeded)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    SendEmail("verify", null, user, confirmationToken);
+                    _logger.LogInformation(string.Format("{0}, new school registered. School: {1}", user.UserName, school.Name));
+                    return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
                 }
-                else if (userEmailExists != null)
+                catch (Exception ex)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in auth/school-register.");
+                    throw;
                 }
-
-                ApplicationUserModel user = new()
-                {
-                    UserName = model.UserInfo.Username,
-                    FirstName = model.UserInfo.FirstName,
-                    LastName = model.UserInfo.LastName,
-                    Email = model.UserInfo.Email,
-                    Gender = model.UserInfo.Gender,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                };
-
-                var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
-
-                if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
-                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
-                }
-
-                SchoolModel school = new()
-                {
-                    StaffUserId = user.Id,
-                    Name = model.SchoolInfo.Name,
-                    Address = model.SchoolInfo.Address
-                };
-
-                _context.School.Add(school);
-                _context.SaveChanges();
-
-                if (!result.Succeeded)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
-                string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                SendEmail("verify", null, user, confirmationToken);
-                return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
-            }
-            catch (Exception)
-            {
-
-                throw;
             }
         }
 
@@ -355,15 +377,17 @@ namespace Predictly_Api.Controllers
                 IdentityResult result = await _userManager.ConfirmEmailAsync(user, model.Token);
                 if (!result.Succeeded)
                 {
+                    _logger.LogWarning(string.Format("{0} is tried to comfirm email with invalid token.", user.UserName));
                     return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
                 }
 
                 SendEmail("verified", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully confirmed email!", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Verification successful, you can now login" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/confirm-email");
                 throw;
             }
         }
@@ -396,11 +420,12 @@ namespace Predictly_Api.Controllers
 
                 var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                 SendEmail("resetPass", null, user, token);
+                _logger.LogInformation(string.Format("{0} generated reset password link.", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Reset Password Link Sent!" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/forgot-password.");
                 throw;
             }
         }
@@ -438,15 +463,17 @@ namespace Predictly_Api.Controllers
 
                 if (!result.Succeeded)
                 {
+                    _logger.LogWarning(string.Format("{0} is tried to reset password with invalid token.", user.UserName));
                     return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
                 }
 
                 SendEmail("resetted", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully resetted password.", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Password Reset Successfull!" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/reset-password");
                 throw;
             }
         }
@@ -488,6 +515,7 @@ namespace Predictly_Api.Controllers
 
                 if (!await _userManager.CheckPasswordAsync(user, model.CurrentPassword))
                 {
+                    _logger.LogWarning(string.Format("{0} tried to change password with incorrect current password.", user.UserName));
                     return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Current password is incorrect!" });
                 }
 
@@ -499,11 +527,12 @@ namespace Predictly_Api.Controllers
                 }
 
                 SendEmail("passwordChanged", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully changed password.", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Password change Successfull!" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/change-password.");
                 throw;
             }
         }
@@ -529,72 +558,102 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns new user details</response>
         /// <response code="400">Username or email already exists</response>
         /// <response code="403">Forbidden</response>
+        /// <response code="409">User
+        /// tr</response>
         /// <response code="500">Internal server error</response>
         [Authorize(Roles = "Admin, Staff")]
         [HttpPost]
         [Route("force-onboard")]
         public async Task<ActionResult<StafftViewModel>> NewUser([FromBody] NewUserViewModel model)
         {
-            var userExists = await _userManager.FindByNameAsync(model.Username);
-            var userEmailExists = await _userManager.FindByEmailAsync(model.Email);
-            if (userExists != null || userEmailExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User already exists!" });
-
-            ApplicationUserModel user = new()
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                UserName = model.Username,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                SchoolId = model.SchoolId,
-                SecurityStamp = Guid.NewGuid().ToString(),
-            };
-
-            var result = await _userManager.CreateAsync(user, "$NewUserPassword1Temp");
-            if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin.ToString()));
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
-            if (!await _roleManager.RoleExistsAsync(UserRoles.User.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.User.ToString()));
-
-            if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Admin)
-            {
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
+                try
                 {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Admin.ToString());
+                    var accessToken = await HttpContext.GetTokenAsync("access_token");
+                    var JWTtoken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var id = JWTtoken.Claims.First(claim => claim.Type == "nameid").Value;
+                    var creater = await _userManager.FindByIdAsync(id);
+
+                    var userExists = await _userManager.FindByNameAsync(model.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.Email);
+
+                    if (userExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing username: {1}.", creater.UserName, model.Username));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    }
+                    else if (userEmailExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing email: {1}.", creater.UserName, model.Email));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    }
+
+                    ApplicationUserModel user = new()
+                    {
+                        UserName = model.Username,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        Email = model.Email,
+                        SchoolId = model.SchoolId,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                    };
+
+                    var result = await _userManager.CreateAsync(user, "$NewUserPassword1Temp");
+                    if (!result.Succeeded)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin.ToString()));
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.User.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.User.ToString()));
+
+                    if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Admin)
+                    {
+
+                        if (await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
+                        {
+                            await _userManager.AddToRoleAsync(user, UserRoles.Admin.ToString());
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Staff)
+                    {
+
+                        if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                        {
+                            await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
+                        }
+                    }
+
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    await transaction.CommitAsync();
+
+                    var userResponse = new StafftViewModel
+                    {
+                        Id = user.Id,
+                        Username = user.UserName,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Gender = user.Gender,
+                        Email = user.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                        isActive = user.EmailConfirmed,
+                        SchoolId = user.SchoolId,
+                    };
+
+                    _logger.LogInformation(string.Format("{0}, new user onborded to username: {1}", creater.UserName, user.UserName));
+                    SendEmail("newUser", null, user, token);
+                    return Ok(userResponse);
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in auth/force-onboard.");
+                    throw;
                 }
             }
-            else if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Staff)
-            {
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
-                }
-            }
-
-            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
-
-            var userResponse = new StafftViewModel
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Gender = user.Gender,
-                Email = user.Email,
-                Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
-                isActive = user.EmailConfirmed,
-                SchoolId = user.SchoolId,
-            };
-
-            SendEmail("newUser", null, user, token);
-            return Ok(userResponse);
         }
 
         /// <summary>
@@ -632,15 +691,17 @@ namespace Predictly_Api.Controllers
 
                 if (!result.Succeeded)
                 {
+                    _logger.LogWarning(string.Format("{0} is tried to setup fresh account with invalid token.", user.UserName));
                     return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Invalid token or password doesn't meet minimum requirements!" });
                 }
 
                 SendEmail("newUserSetup", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} is onboarded successfully.", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "New User Setup Successfull!" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/new-user-setup");
                 throw;
             }
         }

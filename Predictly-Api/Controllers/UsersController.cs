@@ -13,6 +13,7 @@ using Predictly_Api.ViewModels.User;
 using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Enums;
 using System.Net.Mime;
+using Microsoft.Extensions.Logging;
 
 namespace Predictly_Api.Controllers
 {
@@ -25,11 +26,151 @@ namespace Predictly_Api.Controllers
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<UsersController> _logger;
 
-        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context)
+        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger)
         {
             _userManager = userManager;
             _context = context;
+            _logger = logger;
+        }
+
+        /// <summary>
+        /// Get user profile.
+        /// </summary>
+        /// <response code="200">Returns users profile</response>
+        /// <response code="404">User not found</response>
+        [HttpGet("profile")]
+        public async Task<ActionResult<UserViewModel>> GetProfileAsync()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                }
+
+                var studyData = _context.StudyData.Where(x => x.UserId == id).FirstOrDefault();
+                return Ok(new UserViewModel
+                {
+                    Id = user.Id,
+                    Username = user.UserName,
+                    FirstName = user.FirstName,
+                    LastName = user.LastName,
+                    Gender = user.Gender,
+                    Email = user.Email,
+                    SchoolId = user.SchoolId,
+                    OLYear = user.OLYear,
+                    Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: user/profile.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get Students list according to school id. [Access: Admins and Staff only]
+        /// </summary>
+        /// <remarks>
+        /// </remarks>
+        /// <response code="200">Returns users list according to selected role</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Requested user not found</response>
+        [Authorize(Roles = "Admin, Staff")]
+        [HttpGet("student")]
+        public async Task<ActionResult<StudentViewModel>> GetStudents()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" }); ;
+                }
+
+                var usersList = _userManager.Users.ToList();
+                var users = new List<StudentViewModel>();
+                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StudentViewModel
+                {
+                    Id = c.Id,
+                    Username = c.UserName,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Gender = c.Gender,
+                    Email = c.Email,
+                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                    OLYear = c.OLYear,
+                    SchoolId = c.SchoolId,
+                }).Where(c => c.Role.ToLower() == "").ToList();
+
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: user/student.");
+                throw;
+            }
+
+        }
+
+        /// <summary>
+        /// Get staff members list. [Access: Admins and Staff only]
+        /// </summary>
+        /// <response code="200">Returns staff members list</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Requested user not found</response>
+        [Authorize(Roles = "Admin, Staff")]
+        [HttpGet("staff")]
+        public async Task<ActionResult<StafftViewModel>> GetStaff()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                }
+
+                var usersList = _userManager.Users.ToList();
+                var users = new List<StafftViewModel>();
+                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StafftViewModel
+                {
+                    Id = c.Id,
+                    Username = c.UserName,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Gender = c.Gender,
+                    Email = c.Email,
+                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                    isActive = c.EmailConfirmed,
+                    SchoolId = c.SchoolId,
+                }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
+
+
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: user/staff.");
+                throw;
+            }
+
         }
 
         /// <summary>
@@ -107,8 +248,9 @@ namespace Predictly_Api.Controllers
 
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occcured in GET: user/id.");
                 throw;
             }
         }
@@ -148,148 +290,11 @@ namespace Predictly_Api.Controllers
                 }
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occcured in DELETE: user/id.");
                 throw;
             }
-        }
-
-        /// <summary>
-        /// Get user profile.
-        /// </summary>
-        /// <response code="200">Returns users profile</response>
-        /// <response code="404">User not found</response>
-        [HttpGet("profile")]
-        public async Task<ActionResult<UserViewModel>> GetProfileAsync()
-        {
-            try
-            {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
-
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
-                }
-
-                var studyData = _context.StudyData.Where(x => x.UserId == id).FirstOrDefault();
-                return Ok(new UserViewModel
-                {
-                    Id = user.Id,
-                    Username = user.UserName,
-                    FirstName = user.FirstName,
-                    LastName = user.LastName,
-                    Gender = user.Gender,
-                    Email = user.Email,
-                    SchoolId = user.SchoolId,
-                    OLYear = user.OLYear,
-                    Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
-                });
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-        }
-
-        /// <summary>
-        /// Get Students list according to school id. [Access: Admins and Staff only]
-        /// </summary>
-        /// <remarks>
-        /// </remarks>
-        /// <response code="200">Returns users list according to selected role</response>
-        /// <response code="403">Forbidden</response>
-        /// <response code="404">Requested user not found</response>
-        [Authorize(Roles = "Admin, Staff")]
-        [HttpGet("student")]
-        public async Task<ActionResult<StudentViewModel>> GetStudents()
-        {
-            try
-            {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
-
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" }); ;
-                }
-
-                var usersList = _userManager.Users.ToList();
-                var users = new List<StudentViewModel>();
-                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StudentViewModel
-                {
-                    Id = c.Id,
-                    Username = c.UserName,
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
-                    Gender = c.Gender,
-                    Email = c.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                    OLYear = c.OLYear,
-                    SchoolId = c.SchoolId,
-                }).Where(c => c.Role.ToLower() == "").ToList();
-
-                return Ok(users);
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-
-        }
-
-        /// <summary>
-        /// Get staff members list. [Access: Admins and Staff only]
-        /// </summary>
-        /// <response code="200">Returns staff members list</response>
-        /// <response code="403">Forbidden</response>
-        /// <response code="404">Requested user not found</response>
-        [Authorize(Roles = "Admin, Staff")]
-        [HttpGet("staff")]
-        public async Task<ActionResult<StafftViewModel>> GetStaff()
-        {
-            try
-            {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
-
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null)
-                {
-                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
-                }
-
-                var usersList = _userManager.Users.ToList();
-                var users = new List<StafftViewModel>();
-                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StafftViewModel
-                {
-                    Id = c.Id,
-                    Username = c.UserName,
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
-                    Gender = c.Gender,
-                    Email = c.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                    isActive = c.EmailConfirmed,
-                    SchoolId = c.SchoolId,
-                }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
-
-
-                return Ok(users);
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-
         }
 
         /// <summary>
@@ -355,8 +360,9 @@ namespace Predictly_Api.Controllers
                 return Ok(new ResponseModel { Status = "Success", Message = "Study data update successfully!" });
 
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "Error occcured in PUT: user/study-data.");
                 throw;
             }
         }

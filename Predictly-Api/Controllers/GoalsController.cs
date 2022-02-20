@@ -1,8 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Models;
@@ -28,31 +26,34 @@ namespace Predictly_Api.Controllers
 
         [HttpPut("{id}")]
         public async Task<IActionResult> PutGoalModel(int id, GoalModel goalModel)
-        {
+        { 
             if (id != goalModel.Id)
             {
-                return BadRequest();
+                return BadRequest(new ResponseModel { Status="Error", Message="Parameter and Model id is not matching!" });
             }
 
-            _context.Entry(goalModel).State = EntityState.Modified;
-
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GoalModelExists(id))
+                try
                 {
-                    return NotFound();
+                    _context.Entry(goalModel).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    return Ok(new ResponseModel { Status = "sucess", Message = "Goal settings update successfull!" });
                 }
-                else
+                catch (DbUpdateConcurrencyException)
                 {
-                    throw;
+                    await transaction.RollbackAsync();
+                    if (!GoalModelExists(id))
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "Goal not found!" });
+                    }
+                    else
+                    {
+                        throw;
+                    }
                 }
             }
-
-            return NoContent();
         }
 
         [HttpPost]
