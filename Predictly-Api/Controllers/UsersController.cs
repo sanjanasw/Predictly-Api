@@ -55,7 +55,7 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                var studyData = _context.StudyData.Where(x => x.UserId == id).FirstOrDefault();
+                var studyData = await _context.StudyData.Where(x => x.UserId == id).FirstOrDefaultAsync();
                 return Ok(new UserViewModel
                 {
                     Id = user.Id,
@@ -67,6 +67,7 @@ namespace Predictly_Api.Controllers
                     SchoolId = user.SchoolId,
                     OLYear = user.OLYear,
                     Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                    StudyData = studyData,
                 });
             }
             catch (Exception ex)
@@ -100,7 +101,7 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" }); ;
                 }
 
-                var usersList = _userManager.Users.ToList();
+                var usersList = await _userManager.Users.ToListAsync();
                 var users = new List<StudentViewModel>();
                 users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StudentViewModel
                 {
@@ -133,7 +134,7 @@ namespace Predictly_Api.Controllers
         /// <response code="404">Requested user not found</response>
         [Authorize(Roles = "Admin, Staff")]
         [HttpGet("staff")]
-        public async Task<ActionResult<StafftViewModel>> GetStaff()
+        public async Task<ActionResult<StaffViewModel>> GetStaff()
         {
             try
             {
@@ -147,9 +148,9 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                var usersList = _userManager.Users.ToList();
-                var users = new List<StafftViewModel>();
-                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StafftViewModel
+                var usersList = await _userManager.Users.ToListAsync();
+                var users = new List<StaffViewModel>();
+                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == user.SchoolId).Select(c => new StaffViewModel
                 {
                     Id = c.Id,
                     Username = c.UserName,
@@ -161,8 +162,41 @@ namespace Predictly_Api.Controllers
                     isActive = c.EmailConfirmed,
                     SchoolId = c.SchoolId,
                 }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
+                return Ok(users);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: user/staff.");
+                throw;
+            }
 
+        }
 
+        /// <summary>
+        /// Get admin members list. [Access: Admins only]
+        /// </summary>
+        /// <response code="200">Returns admin members list</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="404">Requested user not found</response>
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin")]
+        public async Task<ActionResult<AdminViewModel>> GetAdmins()
+        {
+            try
+            {
+                var usersList = await _userManager.Users.ToListAsync();
+                var users = new List<AdminViewModel>();
+                users = usersList.Where(u => !u.DeleteStatus).Select(c => new AdminViewModel
+                {
+                    Id = c.Id,
+                    Username = c.UserName,
+                    FirstName = c.FirstName,
+                    LastName = c.LastName,
+                    Gender = c.Gender,
+                    Email = c.Email,
+                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                    isActive = c.EmailConfirmed,
+                }).Where(c => c.Role == UserRoles.Admin.ToString()).ToList();
                 return Ok(users);
             }
             catch (Exception ex)
@@ -201,6 +235,17 @@ namespace Predictly_Api.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> PutUser(string id, UpdateUserViewModel model)
         {
+
+            var accessToken = await HttpContext.GetTokenAsync("access_token");
+            var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+            var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+            var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+            if (loggedInUser == null)
+            {
+                return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
+            }
+
             if (id != model.Id)
             {
                 return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
@@ -228,6 +273,12 @@ namespace Predictly_Api.Controllers
                 {
                     var user = await _userManager.FindByIdAsync(id);
 
+                    if (loggedInUser.Id == user.Id)
+                    {
+                        _logger.LogInformation(string.Format("{0} is updated own user info.", user.UserName));
+                    }
+
+                    _logger.LogInformation(string.Format("{0} is updated user info of {1}.", loggedInUser.UserName, user.UserName));
                     return Ok(new
                     {
                         Id = user.Id,
@@ -245,8 +296,6 @@ namespace Predictly_Api.Controllers
                 {
                     return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User data updating failed!" });
                 }
-
-
             }
             catch (Exception ex)
             {
@@ -256,32 +305,59 @@ namespace Predictly_Api.Controllers
         }
 
         /// <summary>
-        /// Delete user. [Access: Admins only]
+        /// Delete user. [Access: Admins and Staff only]
         /// </summary>
         /// <remarks>
         /// <param name="id"></param>
         /// </remarks>
         /// <response code="200">Returns success message</response>
-        /// <response code="400">Vaccination centers must have at least one staff member</response>
+        /// <response code="400">Cannot delete own account or school creators account</response>
         /// <response code="403">Forbidden</response>
         /// <response code="404">User not found</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin, Staff")]
         [HttpDelete("{id}")]
         public async Task<ActionResult> DeleteUser(string id)
         {
 
             try
             {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+                if (loggedInUser == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
+                }
+
+                if (loggedInUserId == id)
+                {
+                    _logger.LogWarning(string.Format("{0} is tried to delete own account.", loggedInUser.UserName));
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Cannot delete own account!" });
+                }
+
                 var user = await _userManager.FindByIdAsync(id);
                 if (user == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
+                var userRole = await _userManager.GetRolesAsync(user);
+                if (userRole[0] == UserRoles.Staff.ToString())
+                {
+                    var isBaseUser = await _context.School.Where(x => x.StaffUserId == user.Id).AnyAsync();
+                    if (isBaseUser)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to delete school creators acccount ({1}).", loggedInUser.UserName, user.UserName));
+                        return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Cannot delete school creators account!" });
+                    }
+                }
                 user.DeleteStatus = true;
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
+                    _logger.LogInformation(string.Format("{0} is deleted {2}'s account.", loggedInUser.UserName, user.UserName));
                     return Ok(new ResponseModel { Status = "Success", Message = "User delete successfully!" });
                 }
                 else
@@ -356,7 +432,7 @@ namespace Predictly_Api.Controllers
 
                 _context.Entry(model).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
-
+                _logger.LogInformation(string.Format("{0} is updated study data.", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Study data update successfully!" });
 
             }

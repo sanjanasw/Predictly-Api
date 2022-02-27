@@ -2,7 +2,7 @@
 
 namespace Predictly_Api.ViewModels.User
 {
-    public class StafftViewModel
+    public class StaffViewModel
     {
         public string Id { get; set; }
         public string Username { get; set; }
