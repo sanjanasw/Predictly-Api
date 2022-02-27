@@ -16,49 +16,77 @@ using Predictly_Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using System.Linq;
 using Predictly_Api.ViewModels.User;
+using VMS_API.ViewModels.Authentication;
+using Microsoft.AspNetCore.Authentication;
+using System.Net.Mime;
+using Microsoft.Extensions.Logging;
 
 namespace Predictly_Api.Controllers
 {
-    [AllowAnonymous]
     [Route("auth")]
     [ApiController]
+    [Produces(MediaTypeNames.Application.Json)]
+    [Consumes(MediaTypeNames.Application.Json)]
     public class AuthenticateController : ControllerBase
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
-        private readonly ApplicationDbContext _context;
+        private readonly ILogger<AuthenticateController> _logger;
 
-        public AuthenticateController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, IConfiguration configuration, IEmailService emailService, ApplicationDbContext context)
+        public AuthenticateController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context,
+            IConfiguration configuration, IEmailService emailService, ILogger<AuthenticateController> logger)
         {
             _userManager = userManager;
             _roleManager = roleManager;
+            _context = context;
             _configuration = configuration;
             _emailService = emailService;
-            _context = context;
+            _logger = logger;
         }
 
+        /// <summary>
+        /// Login to the system
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/login
+        ///     {
+        ///        "userName": "sanjana",
+        ///        "password": "$Sanjana1"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns user data with JWT</response>
+        /// <response code="401">Unothorized user</response>
+        /// <response code="403">User doesn't have access to this endpoint</response>
         [HttpPost]
         [Route("login")]
-        public async Task<IActionResult> Login([FromBody] LoginViewModel model)
+        public async Task<ActionResult<LoginResponseViewModel>> Login([FromBody] LoginViewModel model)
         {
-            var user = await _userManager.FindByNameAsync(model.UserName);
-            if (user != null && !user.DeleteStatus && await _userManager.CheckPasswordAsync(user, model.Password))
+            try
             {
-                if (!user.EmailConfirmed)
+                var user = await _userManager.FindByNameAsync(model.UserName);
+                if (user != null && !user.DeleteStatus && await _userManager.CheckPasswordAsync(user, model.Password))
                 {
-                    return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Please verify your email!" });
-                }
+                    if (!user.EmailConfirmed)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried loggin to the system with out confirming email.", user.FirstName + " " + user.LastName));
+                        return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Please verify your email!" });
+                    }
 
-                if (user.DeleteStatus)
-                {
-                    return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Your account is blocked by admins. Please contact us ASAP!" });
-                }
+                    if (user.DeleteStatus)
+                    {
+                        _logger.LogWarning(string.Format("{0} deleted user is tried loggin to the system.", user.FirstName + " " + user.LastName));
+                        return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Your account is deleted by admins. Please contact us ASAP!" });
+                    }
 
-                var userRoles = await _userManager.GetRolesAsync(user);
+                    var userRoles = await _userManager.GetRolesAsync(user);
 
-                var authClaims = new List<Claim>
+                    var authClaims = new List<Claim>
                 {
                     new Claim(JwtRegisteredClaimNames.NameId, user.Id),
                     new Claim(JwtRegisteredClaimNames.UniqueName, user.UserName),
@@ -66,283 +94,620 @@ namespace Predictly_Api.Controllers
                     new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 };
 
-                foreach (var userRole in userRoles)
-                {
-                    authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                    foreach (var userRole in userRoles)
+                    {
+                        authClaims.Add(new Claim(ClaimTypes.Role, userRole));
+                    }
+
+                    var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
+
+                    var token = new JwtSecurityToken(
+                        issuer: _configuration["JWT:ValidIssuer"],
+                        audience: _configuration["JWT:ValidAudience"],
+                        expires: DateTime.Now.AddHours(3),
+                        claims: authClaims,
+                        signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                     );
+
+                    var school = _context.School.Where(x => x.Id == user.SchoolId).Select(x => x.Name).FirstOrDefault();
+
+                    _logger.LogInformation(string.Format("{0} logged in to the system", user.UserName));
+                    return Ok(new LoginResponseViewModel
+                    {
+                        Token = new JwtSecurityTokenHandler().WriteToken(token),
+                        Id = user.Id,
+                        Name = user.FirstName + ' ' + user.LastName,
+                        Username = user.UserName,
+                        Email = user.Email,
+                        SchoolId = user.SchoolId,
+                        School = school,
+                        Role = (List<string>)userRoles,
+                    });
                 }
-
-                var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JWT:Secret"]));
-
-                var token = new JwtSecurityToken(
-                    issuer: _configuration["JWT:ValidIssuer"],
-                    audience: _configuration["JWT:ValidAudience"],
-                    expires: DateTime.Now.AddHours(3),
-                    claims: authClaims,
-                    signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
-                 );
-
-                var school = _context.School.Where(x => x.Id == user.SchoolId).Select(x => x.Name).FirstOrDefault();
-
-                return Ok(new
-                {
-                    token = new JwtSecurityTokenHandler().WriteToken(token),
-                    id = user.Id,
-                    name = user.FirstName + ' ' + user.LastName,
-                    username = user.UserName,
-                    email = user.Email,
-                    schoolId = user.SchoolId,
-                    school = school,
-                    role = userRoles,
-                });
+                _logger.LogWarning(string.Format("{0} Invalid login attempt.", model.UserName));
+                return Unauthorized(new ResponseModel { Status = "Unauthorized", Message = "Username or password incorrect!" });
             }
-            return Unauthorized(new ResponseModel { Status = "401", Message = "Username or password incorrect!" });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in auth/login.");
+                throw;
+            }
         }
 
+        /// <summary>
+        /// Register as a new user
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/register
+        ///     {
+        ///        "userInfo": {
+        ///            "firstName": "sanjana",
+        ///            "lastName": "witharanage",
+        ///            "email": "sanjanasw99@gmail.com",
+        ///            "olYear": 2017,
+        ///            "gender": 0,
+        ///            "schoolId": 1,
+        ///            "bSub1": 42,
+        ///            "bSub2": 33,
+        ///            "bSub3": 15,
+        ///            "fathersEduLevel": 0,
+        ///            "mothersEduLevel": 0,
+        ///            "username": "sanjanasw",
+        ///            "password": "$Sanjana1"
+        ///         },
+        ///        "studyData": {
+        ///            "sub1Hours": 0,
+        ///            "sub1Class": true,
+        ///            "sub1AvgMarks": 45,
+        ///            "sub2Hours": 1,
+        ///            "sub2Class": true,
+        ///            "sub2AvgMarks": 0,
+        ///            "sub3Hours": 3,
+        ///            "sub3Class": false,
+        ///            "sub3AvgMarks": 67,
+        ///            "sub4Hours": 0,
+        ///            "sub4Class": true,
+        ///            "sub4AvgMarks": 56,
+        ///            "sub5Hours": 1,
+        ///            "sub5Class": false,
+        ///            "sub5AvgMarks": 46,
+        ///            "sub6Hours": 2,
+        ///            "sub6Class": true,
+        ///            "sub6AvgMarks": 98,
+        ///            "sub7Hours": 2,
+        ///            "sub7Class": true,
+        ///            "sub7AvgMarks": 78,
+        ///            "sub8Hours": 4,
+        ///            "sub8Class": false,
+        ///            "sub8AvgMarks": 56,
+        ///            "sub9Hours": 0,
+        ///            "sub9Class": true,
+        ///            "sub9AvgMarks": 53
+        ///         }
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="409">Username or email already exists</response>
+        /// <response code="500">Internal server error</response>
         [HttpPost]
         [Route("register")]
-        public async Task<IActionResult> Register([FromBody] RegisterViewModel model)
+        public async Task<ActionResult<ResponseModel>> Register([FromBody] RegisterViewModel model)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
-                var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                if (userExists != null)
+                try
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (userExists != null)
+                    {
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    }
+                    else if (userEmailExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    }
+
+                    ApplicationUserModel user = new()
+                    {
+                        UserName = model.UserInfo.Username,
+                        FirstName = model.UserInfo.FirstName,
+                        LastName = model.UserInfo.LastName,
+                        Email = model.UserInfo.Email,
+                        Gender = model.UserInfo.Gender,
+                        SchoolId = model.UserInfo.SchoolId,
+                        FathersEduLevel = model.UserInfo.FathersEduLevel,
+                        MothersEduLevel = model.UserInfo.MothersEduLevel,
+                        BSub1 = model.UserInfo.BSub1,
+                        BSub2 = model.UserInfo.BSub2,
+                        BSub3 = model.UserInfo.BSub3,
+                        OLYear = model.UserInfo.OLYear,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                    };
+                    var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
+
+                    model.StudyData.UserId = user.Id;
+
+                    _context.StudyData.Add(model.StudyData);
+                    _context.SaveChanges();
+                    await transaction.CommitAsync();
+
+                    if (!result.Succeeded)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    SendEmail("verify", null, user, confirmationToken);
+                    _logger.LogInformation(string.Format("{0} new student registered.", user.UserName));
+                    return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
                 }
-                else if (userEmailExists != null)
+                catch (Exception ex)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in auth/register.");
+                    throw;
                 }
-
-                ApplicationUserModel user = new()
-                {
-                    UserName = model.UserInfo.Username,
-                    FirstName = model.UserInfo.FirstName,
-                    LastName = model.UserInfo.LastName,
-                    Email = model.UserInfo.Email,
-                    Gender = model.UserInfo.Gender,
-                    SchoolId = model.UserInfo.SchoolId,
-                    FathersEduLevel = model.UserInfo.FathersEduLevel,
-                    MothersEduLevel = model.UserInfo.MothersEduLevel,
-                    BSub1 = model.UserInfo.BSub1,
-                    BSub2 = model.UserInfo.BSub2,
-                    BSub3 = model.UserInfo.BSub3,
-                    OLYear = model.UserInfo.OLYear,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                };
-                var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
-
-                model.StudyData.UserId = user.Id;
-
-                _context.StudyData.Add(model.StudyData);
-                _context.SaveChanges();
-
-                if (!result.Succeeded)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
-                string confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user).Result;
-                sendEmail("verify", null, user, confirmationToken);
-                return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
-            }
-            catch (Exception)
-            {
-
-                throw;
             }
         }
 
+        /// <summary>
+        /// Login to the system
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/school-register
+        ///     {
+        ///       "userInfo": {
+        ///          "firstName": "sanjana",
+        ///          "lastName": "sulakshana",
+        ///          "email": "sanjana@dharmaraja.lk",
+        ///          "gender": 0,
+        ///          "username": "sanjana",
+        ///          "password": "$Sanjana1"
+        ///         },
+        ///      "schoolInfo": {
+        ///          "name": "Dharmaraja College",
+        ///          "address": "Dharmaraja Rd. Kandy."
+        ///         }
+        ///       }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="409">Username or email already exists</response>
+        /// <response code="500">Internal server error</response>
         [HttpPost]
         [Route("school-register")]
-        public async Task<IActionResult> SchoolRegister([FromBody] SchoolRegisterViewModel model)
+        public async Task<ActionResult<ResponseModel>> SchoolRegister([FromBody] SchoolRegisterViewModel model)
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (userExists != null)
+                    {
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    }
+                    else if (userEmailExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    }
+
+                    ApplicationUserModel user = new()
+                    {
+                        UserName = model.UserInfo.Username,
+                        FirstName = model.UserInfo.FirstName,
+                        LastName = model.UserInfo.LastName,
+                        Email = model.UserInfo.Email,
+                        Gender = model.UserInfo.Gender,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                    };
+
+                    var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
+
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
+                    if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                    {
+                        await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
+                    }
+
+                    SchoolModel school = new()
+                    {
+                        StaffUserId = user.Id,
+                        Name = model.SchoolInfo.Name,
+                        Address = model.SchoolInfo.Address
+                    };
+
+                    _context.School.Add(school);
+                    _context.SaveChanges();
+                    await transaction.CommitAsync();
+
+                    if (!result.Succeeded)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    SendEmail("verify", null, user, confirmationToken);
+                    _logger.LogInformation(string.Format("{0}, new school registered. School: {1}", user.UserName, school.Name));
+                    return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in auth/school-register.");
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Confirm email
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/confirm-email
+        ///     {
+        ///         "userid": "gfuie-8feiufb-reufberf-rei",
+        ///         "token": "kjufbkjdfuirefu8h4r94ruiuwb38dbnie844bu44bi"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">Invalid token</response>
+        /// <response code="404">User not found</response>
+        [HttpPost("confirm-email")]
+        public async Task<ActionResult<ResponseModel>> ConfirmEmail(ConfirmEmailViewModel model)
         {
             try
             {
-                var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
-                var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                if (userExists != null)
+                ApplicationUserModel user = await _userManager.FindByIdAsync(model.Userid);
+
+                if (user == null)
                 {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
-                }
-                else if (userEmailExists != null)
-                {
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
                 }
 
-                ApplicationUserModel user = new()
-                {
-                    UserName = model.UserInfo.Username,
-                    FirstName = model.UserInfo.FirstName,
-                    LastName = model.UserInfo.LastName,
-                    Email = model.UserInfo.Email,
-                    Gender = model.UserInfo.Gender,
-                    SecurityStamp = Guid.NewGuid().ToString(),
-                };
-
-                var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
-
-                if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                    await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
-                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
-                }
-
-                SchoolModel school = new()
-                {
-                    StaffUserId = user.Id,
-                    Name = model.SchoolInfo.Name,
-                    Address = model.SchoolInfo.Address
-                };
-
-                _context.School.Add(school);
-                _context.SaveChanges();
-
+                IdentityResult result = await _userManager.ConfirmEmailAsync(user, model.Token);
                 if (!result.Succeeded)
-                    return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+                {
+                    _logger.LogWarning(string.Format("{0} is tried to comfirm email with invalid token.", user.UserName));
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
+                }
 
-                string confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user).Result;
-                sendEmail("verify", null, user, confirmationToken);
-                return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
+                SendEmail("verified", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully confirmed email!", user.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "Verification successful, you can now login" });
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-
+                _logger.LogError(ex, "Error occcured in auth/confirm-email");
                 throw;
             }
         }
 
-        [HttpPost("confirm-email")]
-        public IActionResult ConfirmEmail(ConfirmEmailViewModel model)
-        {
-            ApplicationUserModel user = _userManager.FindByIdAsync(model.Userid).Result;
-            IdentityResult result = _userManager.ConfirmEmailAsync(user, model.Token).Result;
-            if (!result.Succeeded)
-            {
-                return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
-            }
-
-            sendEmail("verified", user.Email, null, null);
-            return Ok(new ResponseModel { Status = "Success", Message = "Verification successful, you can now login" });
-        }
-
+        /// <summary>
+        /// Forgot password
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/forgot-password
+        ///     {
+        ///         "email": "sanjanasw99@gmail.com"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="404">User not found</response>
         [HttpPost("forgot-Password")]
-        public IActionResult ForgotPassword(ForgetPasswordViewModel model)
+        public async Task<ActionResult<ResponseModel>> ForgotPassword(ForgetPasswordViewModel model)
         {
-            ApplicationUserModel user = _userManager.FindByEmailAsync(model.Email).Result;
-
-            if (user == null || !(_userManager.IsEmailConfirmedAsync(user).Result))
+            try
             {
-                return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
-            }
+                ApplicationUserModel user = await _userManager.FindByEmailAsync(model.Email);
 
-            var token = _userManager.GeneratePasswordResetTokenAsync(user).Result;
-            sendEmail("resetPass", null, user, token);
-            return Ok(new ResponseModel { Status = "Success", Message = "Reset Password Link Sent!" });
+                if (user == null || !(await _userManager.IsEmailConfirmedAsync(user)))
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
+                }
+
+                var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                SendEmail("resetPass", null, user, token);
+                _logger.LogInformation(string.Format("{0} generated reset password link.", user.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "Reset Password Link Sent!" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in auth/forgot-password.");
+                throw;
+            }
         }
 
+        /// <summary>
+        /// Reset password
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/reset-password
+        ///     {
+        ///         "userid": "gfuie-8feiufb-reufberf-rei",
+        ///         "token": "kjufbkjdfuirefu8h4r94ruiuwb38dbnie844bu44bi",
+        ///         "password": "Not@1234"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">Invalid token</response>
+        /// <response code="404">User not found</response>
         [HttpPost("reset-Password")]
-        public IActionResult ResetPassword(ResetPasswordViewModel model)
+        public async Task<ActionResult<ResponseModel>> ResetPassword(ResetPasswordViewModel model)
         {
-            ApplicationUserModel user = _userManager.FindByIdAsync(model.Userid).Result;
-            IdentityResult result = _userManager.ResetPasswordAsync(user, model.Token, model.Password).Result;
-
-            if (!result.Succeeded)
+            try
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
-            }
+                ApplicationUserModel user = await _userManager.FindByIdAsync(model.Userid);
 
-            sendEmail("resetted", user.Email, null, null);
-            return Ok(new ResponseModel { Status = "Success", Message = "Password Reset Successfull!" });
+                if (user == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
+                }
+
+                IdentityResult result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning(string.Format("{0} is tried to reset password with invalid token.", user.UserName));
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid!" });
+                }
+
+                SendEmail("resetted", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully resetted password.", user.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "Password Reset Successfull!" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in auth/reset-password");
+                throw;
+            }
         }
 
-        [Authorize(Roles = "Admin")]
+        /// <summary>
+        /// Change password
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/change-password
+        ///     {
+        ///         "currentPassword": "Not@1234",
+        ///         "newPassword": "1234@Not"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">Password doesn't meet minimum requirements</response>
+        /// <response code="403">Current password incorrect</response>
+        /// <response code="404">User not found</response>
+        [Authorize]
+        [HttpPost("change-password")]
+        public async Task<ActionResult<ResponseModel>> NewUserSetupAsync(ChangePasswordViewModel model)
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+                var user = await _userManager.FindByIdAsync(id);
+
+                if (user == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
+                }
+
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+
+                if (!await _userManager.CheckPasswordAsync(user, model.CurrentPassword))
+                {
+                    _logger.LogWarning(string.Format("{0} tried to change password with incorrect current password.", user.UserName));
+                    return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Current password is incorrect!" });
+                }
+
+                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
+
+                if (!result.Succeeded)
+                {
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Somethig went wrong!" });
+                }
+
+                SendEmail("passwordChanged", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully changed password.", user.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "Password change Successfull!" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in auth/change-password.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Create new admin/staff account. [Access: Admins and Staff only]
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/force-onboard
+        ///     {
+        ///         "username": "sanjanasw",
+        ///         "firstName": "sanjana",
+        ///         "lastName": "witharanage",
+        ///         "email": "sanjanasw99@gmail.com",
+        ///         "gender": 0,
+        ///         "role": 1,
+        ///         "schoolId": 1
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns new user details</response>
+        /// <response code="400">Username or email already exists</response>
+        /// <response code="403">Forbidden</response>
+        /// <response code="409">User
+        /// tr</response>
+        /// <response code="500">Internal server error</response>
+        [Authorize(Roles = "Admin, Staff")]
         [HttpPost]
         [Route("force-onboard")]
         public async Task<ActionResult<StafftViewModel>> NewUser([FromBody] NewUserViewModel model)
         {
-            var userExists = await _userManager.FindByNameAsync(model.Username);
-            var userEmailExists = await _userManager.FindByEmailAsync(model.Email);
-            if (userExists != null || userEmailExists != null)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User already exists!" });
-
-            ApplicationUserModel user = new()
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                UserName = model.Username,
-                FirstName = model.FirstName,
-                LastName = model.LastName,
-                Email = model.Email,
-                SchoolId = model.SchoolId,
-                SecurityStamp = Guid.NewGuid().ToString(),
-            };
-
-            var result = await _userManager.CreateAsync(user, "$NewUserPassword1Temp");
-            if (!result.Succeeded)
-                return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
-
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin.ToString()));
-            if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
-            if (!await _roleManager.RoleExistsAsync(UserRoles.User.ToString()))
-                await _roleManager.CreateAsync(new IdentityRole(UserRoles.User.ToString()));
-
-            if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Admin)
-            {
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
+                try
                 {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Admin.ToString());
+                    var accessToken = await HttpContext.GetTokenAsync("access_token");
+                    var JWTtoken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var id = JWTtoken.Claims.First(claim => claim.Type == "nameid").Value;
+                    var creater = await _userManager.FindByIdAsync(id);
+
+                    var userExists = await _userManager.FindByNameAsync(model.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.Email);
+
+                    if (userExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing username: {1}.", creater.UserName, model.Username));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
+                    }
+                    else if (userEmailExists != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing email: {1}.", creater.UserName, model.Email));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
+                    }
+
+                    ApplicationUserModel user = new()
+                    {
+                        UserName = model.Username,
+                        FirstName = model.FirstName,
+                        LastName = model.LastName,
+                        Email = model.Email,
+                        SchoolId = model.SchoolId,
+                        SecurityStamp = Guid.NewGuid().ToString(),
+                    };
+
+                    var result = await _userManager.CreateAsync(user, "$NewUserPassword1Temp");
+                    if (!result.Succeeded)
+                        return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
+
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Admin.ToString()));
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.Staff.ToString()));
+                    if (!await _roleManager.RoleExistsAsync(UserRoles.User.ToString()))
+                        await _roleManager.CreateAsync(new IdentityRole(UserRoles.User.ToString()));
+
+                    if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Admin)
+                    {
+
+                        if (await _roleManager.RoleExistsAsync(UserRoles.Admin.ToString()))
+                        {
+                            await _userManager.AddToRoleAsync(user, UserRoles.Admin.ToString());
+                        }
+                    }
+                    else if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Staff)
+                    {
+
+                        if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
+                        {
+                            await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
+                        }
+                    }
+
+                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    await transaction.CommitAsync();
+
+                    var userResponse = new StafftViewModel
+                    {
+                        Id = user.Id,
+                        Username = user.UserName,
+                        FirstName = user.FirstName,
+                        LastName = user.LastName,
+                        Gender = user.Gender,
+                        Email = user.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
+                        isActive = user.EmailConfirmed,
+                        SchoolId = user.SchoolId,
+                    };
+
+                    _logger.LogInformation(string.Format("{0}, new user onborded to username: {1}", creater.UserName, user.UserName));
+                    SendEmail("newUser", null, user, token);
+                    return Ok(userResponse);
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in auth/force-onboard.");
+                    throw;
                 }
             }
-            else if (!string.IsNullOrEmpty(model.Role.ToString()) && model.Role == UserRoles.Staff)
-            {
-
-                if (await _roleManager.RoleExistsAsync(UserRoles.Staff.ToString()))
-                {
-                    await _userManager.AddToRoleAsync(user, UserRoles.Staff.ToString());
-                }
-            }
-
-            var token = _userManager.GeneratePasswordResetTokenAsync(user).Result;
-
-            var userResponse = new StafftViewModel
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                FirstName = user.FirstName,
-                LastName = user.LastName,
-                Gender = user.Gender,
-                Email = user.Email,
-                Role = string.Join(",", _userManager.GetRolesAsync(user).Result.ToArray()),
-                isActive = user.EmailConfirmed,
-                SchoolId = user.SchoolId,
-            };
-
-            sendEmail("newUser", null, user, token);
-            return Ok(userResponse);
         }
 
+        /// <summary>
+        /// New user account setup
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/new-user-setup
+        ///     {
+        ///         "userid": "gfuie-8feiufb-reufberf-rei",
+        ///         "token": "kjufbkjdfuirefu8h4r94ruiuwb38dbnie844bu44bi",
+        ///         "password": "Not@1234"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">Invalid token or password doesn't meet minimum requirements</response>
+        /// <response code="404">User not found</response>
         [HttpPost("new-user-setup")]
-        public IActionResult NewUserSetup(ResetPasswordViewModel model)
+        public async Task<ActionResult<ResponseModel>> ChangePassword(ResetPasswordViewModel model)
         {
-            ApplicationUserModel user = _userManager.FindByIdAsync(model.Userid).Result;
-            IdentityResult result = _userManager.ResetPasswordAsync(user, model.Token, model.Password).Result;
-            user.EmailConfirmed = true;
-            _userManager.UpdateAsync(user);
-
-            if (!result.Succeeded)
+            try
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Token Invalid or password doesn't meet the requirements!" });
-            }
+                ApplicationUserModel user = await _userManager.FindByIdAsync(model.Userid);
 
-            sendEmail("newUserSetup", user.Email, null, null);
-            return Ok(new ResponseModel { Status = "Success", Message = "New User Setup Successfull!" });
+                if (user == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
+                }
+
+                IdentityResult result = await _userManager.ResetPasswordAsync(user, model.Token, model.Password);
+                user.EmailConfirmed = true;
+                await _userManager.UpdateAsync(user);
+
+                if (!result.Succeeded)
+                {
+                    _logger.LogWarning(string.Format("{0} is tried to setup fresh account with invalid token.", user.UserName));
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Invalid token or password doesn't meet minimum requirements!" });
+                }
+
+                SendEmail("newUserSetup", user.Email, null, null);
+                _logger.LogInformation(string.Format("{0} is onboarded successfully.", user.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "New User Setup Successfull!" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in auth/new-user-setup");
+                throw;
+            }
         }
 
-        private void sendEmail(string _type, string _email = null, ApplicationUserModel _user = null, string _token =  null)
+        private void SendEmail(string _type, string _email = null, ApplicationUserModel _user = null, string _token = null)
         {
-            string message;
             string subject = "";
             string html = "";
             string verifyUrl;
@@ -354,45 +719,216 @@ namespace Predictly_Api.Controllers
                 {
                     case "verify":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/confirm-email?userid={_user.Id}&token={_token}";
-                        message = $@"<p>Please click the below link to verify your email address:</p>
-                             <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
-                        subject = "Predictly Signup - Verify Email";
-                        html = $@"<h4>Verify Email</h4>
-                         {message}";
+                        subject = "Sign-up Verification Vaccination Management System - Verify Email";
+                        html =
+                        $@" <center><img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=1kIvq5gRqlUM_y-Y-7KpQw3oGtuX7Im0A'
+                                alt=''
+                                />
+                            <h2>
+                                Please click the below button to <br /> verify your email
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgb(4, 128, 201);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""{verifyUrl}""
+                                >
+                                Verify email
+                                </a></center>";
                         break;
                     case "resetPass":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
-                        message = $@"<p>Please click the below link to reset your password:</p>
-                             <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
-                        subject = "Predictly - Reset password";
-                        html = $@"<h4>Reset Password</h4>
-                         {message}";
+                        subject = "Vaccination Management System - Reset password";
+                        html = $@" <center>
+                                <img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=12MmOUkndXs65qf7kd6FCzV4iZGKPF16s'
+                                alt=''
+                                />
+                            <h2 style=""
+                                    color: black;
+                                "">
+                                Please click the below button to <br />
+                                reset your password
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgb(255, 115, 0);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""{verifyUrl}""
+                                >
+                                Reset Password
+                                </a>
+                            </center>";
                         break;
                     case "verified":
-                        message = $@"<p>Verification Successfull!</p>";
-                        subject = "Predictly Signup";
-                        html = $@"<h4>Verify Email</h4>
-                         {message}";
+                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
+                        subject = "Sign-up Verification Vaccination Management System";
+                        html =
+                        $@" <center><img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=1LqFsaoDVUdXQMUMoEZ8MkNTjDiYQp1FZ'
+                                alt=''
+                                />
+                            <h2 style=""
+                                    color: black;
+                                "">
+                                Your email verification is successfull
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgb(37, 199, 50);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""{verifyUrl}""
+                                >
+                                Continue to Login
+                                </a></center>";
                         break;
                     case "resetted":
-                        message = $@"<p>Reset Password Successfull!</p>";
-                        subject = "Predictly Password Reset";
-                        html = $@"<h4>Password Reset</h4>
-                         {message}";
+                        subject = "Password Reset Successfull";
+                        html =
+                        $@" <center>
+                                <img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=1tQNONuwfg5phj1teyBbG7W02lpQ6nPBi'
+                                alt=''
+                                />
+                            <h2>
+                                Password Resetted Successfully!
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgb(143, 179, 46);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                >
+                                Continue to Login
+                                </a>
+                            </center>";
                         break;
                     case "newUser":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/new-user-setup?userid={_user.Id}&token={_token}";
-                        message = $@"<p>Please click the below link to set password to your account:</p>
-                             <p><a href=""{verifyUrl}"">{verifyUrl}</a></p>";
-                        subject = "Predictly - New User Invitation";
-                        html = $@"<h4>New User Setup</h4>
-                         {message}";
+                        subject = "Vaccination Management System - New User Invitation";
+                        html =
+                        $@" <center>
+                                <img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=1ornFZghAE9F3kNLxmMYNo5F9H0azVKU3'
+                                alt=''
+                                />
+                            <h2>
+                                New User Setup
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgb(179, 80, 204);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""{verifyUrl}""
+                                >
+                                Continue to Login
+                                </a>
+                            </center>";
                         break;
                     case "newUserSetup":
-                        message = $@"<p>Password Setup Successfull!</p>";
-                        subject = "Predictly Password Setup";
-                        html = $@"<h4>Welcome TO the Vaccination Management System</h4>
-                         {message}";
+                        subject = "Password Setup Successfull";
+                        html =
+                        $@" <center>
+                                <img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=1GhZJQfcGeJhxZ0_kPh2MrfSMe9izMsi-'
+                                alt=''
+                                />
+                            <h2>
+                                Password of new user account <br />
+                                setup successfully!
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgb(104, 107, 109);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                >
+                                Continue to Login
+                                </a>
+                        </center>";
+                        break;
+                    case "passwordChanged":
+                        subject = "Password Change Successfull";
+                        html =
+                        $@" <center><img
+                                style=""width: 40%""
+                                src='https://docs.google.com/uc?id=10uumtpFjMuE7CIXYiQjeKmNPMIhr1YkX'
+                                alt=''
+                                />
+                            <h2>
+                                Password change successfull!
+                            </h2>
+                            <br />
+                                <a
+                                style=""
+                                    border-radius: 5px;
+                                    color: white;
+                                    background-color: rgba(245, 55, 91, 1);
+                                    padding: 15px;
+                                    border: none;
+                                    letter-spacing: 0.1rem;
+                                    text-transform: uppercase;
+                                    text-decoration: none;
+                                ""
+                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                >
+                                Continue to Login
+                                </a><center>";
                         break;
 
                 }
@@ -406,11 +942,8 @@ namespace Predictly_Api.Controllers
             }
             catch (Exception)
             {
-
                 throw;
             }
-
-
         }
 
     }

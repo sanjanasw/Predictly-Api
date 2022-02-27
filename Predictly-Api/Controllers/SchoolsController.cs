@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.School;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Predictly_Api.Controllers
 {
@@ -18,11 +20,28 @@ namespace Predictly_Api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Get schools list
+        /// </summary>
+        /// <response code="200">Returns schools list</response>
+        /// <response code="404">User not found</response>
         [HttpGet]
-        public ActionResult<IEnumerable<SchoolViewModel>> GetSchools()
+        public async Task<ActionResult<SchoolViewModel>> GetSchools()
         {
-            var schools = _context.School.Select(x  => new {x.Id, x.Name}).ToList();
-            return Ok(schools);
+            try
+            {
+
+                var schools = await _context.School.Select(x => new { x.Id, x.Name }).ToListAsync();
+                if (schools == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "Schools not found!" });
+                }
+                return Ok(schools);
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
     }
 }

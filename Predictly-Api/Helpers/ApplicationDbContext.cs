@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Predictly_Api.ViewModels.Authentication;
 
 namespace Predictly_Api.Models
 {
@@ -23,5 +18,6 @@ namespace Predictly_Api.Models
         public DbSet<StudyDataModel> StudyData { get; set; }
         public DbSet<SchoolModel> School { get; set; }
         public DbSet<SubjectModel> Subjects { get; set; }
+        public DbSet<GoalModel> Goals { get; set; }
     }
 }
