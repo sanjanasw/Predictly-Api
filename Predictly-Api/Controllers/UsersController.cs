@@ -277,8 +277,11 @@ namespace Predictly_Api.Controllers
                     {
                         _logger.LogInformation(string.Format("{0} is updated own user info.", user.UserName));
                     }
+                    else
+                    {
+                        _logger.LogInformation(string.Format("{0} is updated user info of {1}.", loggedInUser.UserName, user.UserName));
+                    }
 
-                    _logger.LogInformation(string.Format("{0} is updated user info of {1}.", loggedInUser.UserName, user.UserName));
                     return Ok(new
                     {
                         Id = user.Id,
