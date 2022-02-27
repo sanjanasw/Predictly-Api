@@ -10,8 +10,8 @@ using Predictly_Api.Models;
 namespace Predictly_Api.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20220206172823_goals table")]
-    partial class goalstable
+    [Migration("20220227031808_add goal table")]
+    partial class addgoaltable
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -252,22 +252,37 @@ namespace Predictly_Api.Migrations
 
             modelBuilder.Entity("Predictly_Api.Models.GoalModel", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<int>("Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int>("SubjectId")
-                        .HasColumnType("int");
-
                     b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
-                    b.HasKey("Id");
+                    b.Property<int>("Sub1Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub2Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub3Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub4Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub5Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub6Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub7Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub8Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Sub9Goal")
+                        .HasColumnType("int");
+
+                    b.HasKey("UserId");
 
                     b.ToTable("Goals");
                 });

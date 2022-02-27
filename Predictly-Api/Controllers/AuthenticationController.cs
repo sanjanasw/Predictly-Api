@@ -74,13 +74,13 @@ namespace Predictly_Api.Controllers
                 {
                     if (!user.EmailConfirmed)
                     {
-                        _logger.LogWarning(string.Format("{0} is tried loggin to the system with out confirming email.", user.FirstName + " " + user.LastName));
+                        _logger.LogWarning(string.Format("{0} is tried loggin to the system with out confirming email.", user.UserName));
                         return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Please verify your email!" });
                     }
 
                     if (user.DeleteStatus)
                     {
-                        _logger.LogWarning(string.Format("{0} deleted user is tried loggin to the system.", user.FirstName + " " + user.LastName));
+                        _logger.LogWarning(string.Format("{0} deleted user is tried loggin to the system.", user.UserName));
                         return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Your account is deleted by admins. Please contact us ASAP!" });
                     }
 
@@ -564,7 +564,7 @@ namespace Predictly_Api.Controllers
         [Authorize(Roles = "Admin, Staff")]
         [HttpPost]
         [Route("force-onboard")]
-        public async Task<ActionResult<StafftViewModel>> NewUser([FromBody] NewUserViewModel model)
+        public async Task<ActionResult<StaffViewModel>> NewUser([FromBody] NewUserViewModel model)
         {
             using (var transaction = await _context.Database.BeginTransactionAsync())
             {
@@ -630,7 +630,7 @@ namespace Predictly_Api.Controllers
                     var token = await _userManager.GeneratePasswordResetTokenAsync(user);
                     await transaction.CommitAsync();
 
-                    var userResponse = new StafftViewModel
+                    var userResponse = new StaffViewModel
                     {
                         Id = user.Id,
                         Username = user.UserName,

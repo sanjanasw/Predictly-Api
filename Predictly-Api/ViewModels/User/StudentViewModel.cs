@@ -1,4 +1,5 @@
 ﻿using Predictly_Api.Enums;
+using Predictly_Api.Models;
 
 namespace Predictly_Api.ViewModels.User
 {
