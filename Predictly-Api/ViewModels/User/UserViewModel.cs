@@ -16,6 +16,5 @@ namespace Predictly_Api.ViewModels.User
         public int SchoolId { get; set; }
         public int OLYear { get; set; }
         public string Role { get; set; }
-        public StudyDataModel StudyData { get; set; }
     }
 }

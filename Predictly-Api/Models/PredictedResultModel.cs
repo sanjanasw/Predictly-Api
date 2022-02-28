@@ -1,9 +1,10 @@
 ﻿using Predictly_Api.Enums;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Predictly_Api.Models
 {
-    public class StudyDataModel
+    public class PredictedResultModel
     {
         [Key]
         public int Id { get; set; }
@@ -12,10 +13,15 @@ namespace Predictly_Api.Models
         [Required]
         public int SubjectId { get; set; }
         [Required]
-        public SubHours Commitment { get; set; }
+        public double A  { get; set; }
         [Required]
-        public bool ClassStatus { get; set; }
+        public double B { get; set; }
         [Required]
-        public double AvgMarks { get; set; }
+        public double C { get; set; }
+        [Required]
+        public double S { get; set; }
+        [Required]
+        public double W { get; set; }
+        public DateTime UpdatedOn { get; set; } = DateTime.Now;
     }
 }

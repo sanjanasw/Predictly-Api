@@ -250,37 +250,22 @@ namespace Predictly_Api.Migrations
 
             modelBuilder.Entity("Predictly_Api.Models.GoalModel", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("Goal")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("Sub1Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub2Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub3Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub4Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub5Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub6Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub7Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub8Goal")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("Sub9Goal")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserId");
+                    b.HasKey("Id");
 
                     b.ToTable("Goals");
                 });
@@ -342,91 +327,28 @@ namespace Predictly_Api.Migrations
 
             modelBuilder.Entity("Predictly_Api.Models.StudyDataModel", b =>
                 {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<double>("AvgMarks")
+                        .HasColumnType("float");
+
+                    b.Property<bool>("ClassStatus")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Commitment")
+                        .HasColumnType("int");
+
+                    b.Property<int>("SubjectId")
+                        .HasColumnType("int");
+
                     b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.Property<double>("Sub1AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Sub1Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Sub1Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Sub2AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Sub2Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Sub2Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Sub3AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Sub3Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Sub3Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Sub4AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Sub4Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Sub4Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Sub5AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Sub5Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Sub5Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double>("Sub6AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool>("Sub6Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("Sub6Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Sub7AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool?>("Sub7Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("Sub7Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Sub8AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool?>("Sub8Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("Sub8Hours")
-                        .HasColumnType("int");
-
-                    b.Property<double?>("Sub9AvgMarks")
-                        .HasColumnType("float");
-
-                    b.Property<bool?>("Sub9Class")
-                        .HasColumnType("bit");
-
-                    b.Property<int?>("Sub9Hours")
-                        .HasColumnType("int");
-
-                    b.HasKey("UserId");
+                    b.HasKey("Id");
 
                     b.ToTable("StudyData");
                 });

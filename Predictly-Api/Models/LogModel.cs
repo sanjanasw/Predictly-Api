@@ -15,7 +15,7 @@ namespace Predictly_Api.Models
         public string Level { get; set; }
         [Required]
         public DateTime TimeStamp { get; set; }
-        public string? Exception { get; set; }
+        public string Exception { get; set; }
         [Required]
         public string Properties { get; set; }
     }
