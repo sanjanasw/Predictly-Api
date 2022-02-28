@@ -157,35 +157,14 @@ namespace Predictly_Api.Controllers
         ///            "username": "sanjanasw",
         ///            "password": "$Sanjana1"
         ///         },
-        ///        "studyData": {
-        ///            "sub1Hours": 0,
-        ///            "sub1Class": true,
-        ///            "sub1AvgMarks": 45,
-        ///            "sub2Hours": 1,
-        ///            "sub2Class": true,
-        ///            "sub2AvgMarks": 0,
-        ///            "sub3Hours": 3,
-        ///            "sub3Class": false,
-        ///            "sub3AvgMarks": 67,
-        ///            "sub4Hours": 0,
-        ///            "sub4Class": true,
-        ///            "sub4AvgMarks": 56,
-        ///            "sub5Hours": 1,
-        ///            "sub5Class": false,
-        ///            "sub5AvgMarks": 46,
-        ///            "sub6Hours": 2,
-        ///            "sub6Class": true,
-        ///            "sub6AvgMarks": 98,
-        ///            "sub7Hours": 2,
-        ///            "sub7Class": true,
-        ///            "sub7AvgMarks": 78,
-        ///            "sub8Hours": 4,
-        ///            "sub8Class": false,
-        ///            "sub8AvgMarks": 56,
-        ///            "sub9Hours": 0,
-        ///            "sub9Class": true,
-        ///            "sub9AvgMarks": 53
+        ///        "studyData": [
+        ///         {
+        ///            "SubjectId": 2,
+        ///            "Commitment": 0,
+        ///            "ClassStatus": true,
+        ///            "AvgMarks": 45,
         ///         }
+        ///         ]
         ///     }
         ///
         /// </remarks>
@@ -230,9 +209,16 @@ namespace Predictly_Api.Controllers
                     };
                     var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
 
-                    model.StudyData.UserId = user.Id;
-
-                    _context.StudyData.Add(model.StudyData);
+                    foreach (var item in model.StudyData)
+                    {
+                        _context.StudyData.Add(new StudyDataModel
+                        {
+                            UserId = user.Id,
+                            Commitment = item.Commitment,
+                            AvgMarks = item.AvgMarks,
+                            ClassStatus = item.ClassStatus,
+                        });
+                    };
                     _context.SaveChanges();
                     await transaction.CommitAsync();
 
@@ -558,10 +544,9 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns new user details</response>
         /// <response code="400">Username or email already exists</response>
         /// <response code="403">Forbidden</response>
-        /// <response code="409">User
-        /// tr</response>
+        /// <response code="409">User details conflict</response>
         /// <response code="500">Internal server error</response>
-        [Authorize(Roles = "Admin, Staff")]
+        //[Authorize(Roles = "Admin, Staff")]
         [HttpPost]
         [Route("force-onboard")]
         public async Task<ActionResult<StaffViewModel>> NewUser([FromBody] NewUserViewModel model)

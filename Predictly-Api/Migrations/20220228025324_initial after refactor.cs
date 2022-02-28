@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Predictly_Api.Migrations
 {
-    public partial class initial : Migration
+    public partial class initialafterrefactor : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -58,6 +58,39 @@ namespace Predictly_Api.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Goals",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SubjectId = table.Column<int>(type: "int", nullable: false),
+                    Goal = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Goals", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Logs",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Message = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MessageTemplate = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Level = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    TimeStamp = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Exception = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Properties = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Logs", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "School",
                 columns: table => new
                 {
@@ -76,38 +109,30 @@ namespace Predictly_Api.Migrations
                 name: "StudyData",
                 columns: table => new
                 {
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: false),
-                    Sub1Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub1Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub1AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub2Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub2Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub2AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub3Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub3Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub3AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub4Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub4Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub4AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub5Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub5Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub5AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub6Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub6Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub6AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub7Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub7Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub7AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub8Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub8Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub8AvgMarks = table.Column<float>(type: "real", nullable: false),
-                    Sub9Hours = table.Column<int>(type: "int", nullable: false),
-                    Sub9Class = table.Column<bool>(type: "bit", nullable: false),
-                    Sub9AvgMarks = table.Column<float>(type: "real", nullable: false)
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Commitment = table.Column<int>(type: "int", nullable: false),
+                    ClassStatus = table.Column<bool>(type: "bit", nullable: false),
+                    AvgMarks = table.Column<double>(type: "float", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_StudyData", x => x.UserId);
+                    table.PrimaryKey("PK_StudyData", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Subjects",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    BucketType = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Subjects", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -274,10 +299,19 @@ namespace Predictly_Api.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "Goals");
+
+            migrationBuilder.DropTable(
+                name: "Logs");
+
+            migrationBuilder.DropTable(
                 name: "School");
 
             migrationBuilder.DropTable(
                 name: "StudyData");
+
+            migrationBuilder.DropTable(
+                name: "Subjects");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

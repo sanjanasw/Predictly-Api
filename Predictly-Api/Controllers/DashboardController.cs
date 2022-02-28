@@ -115,6 +115,11 @@ namespace Predictly_Api.Controllers
             });
         }
 
+        /// <summary>
+        /// Get student dashboard data.
+        /// </summary>
+        /// <response code="200">Returns dashboard data</response>
+        /// <response code="404">User not found</response>
         [HttpGet("student")]
         public async Task<ActionResult<StudentDashboardViewModel>> GetStudentDashboard()
         {

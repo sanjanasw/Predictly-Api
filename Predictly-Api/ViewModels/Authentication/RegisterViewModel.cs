@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 using Predictly_Api.Enums;
 using Predictly_Api.Models;
 
@@ -14,7 +11,7 @@ namespace Predictly_Api.ViewModels.Authentication
         public UserInfo UserInfo { get; set; }
 
         [Required(ErrorMessage = "Study Data is required")]
-        public StudyDataModel StudyData { get; set; }
+        public List<StudyDataModel> StudyData { get; set; }
 
     }
 
