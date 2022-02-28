@@ -40,9 +40,9 @@ namespace Predictly_Api.Controllers
             MockPredictedResult.Add(new PredictedResultModel
             {
               UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-              SubjectId = 2,
-              A = 18.5,
-              B = 83.5,
+              SubjectId = 1,
+              A = 78.5,
+              B = 23.5,
               C = 5.5,
               S = 1.3,
               W = 0.5,
@@ -51,9 +51,20 @@ namespace Predictly_Api.Controllers
             MockPredictedResult.Add(new PredictedResultModel
             {
                 UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 3,
+                SubjectId = 2,
                 A = 18.5,
                 B = 83.5,
+                C = 5.5,
+                S = 1.3,
+                W = 0.5,
+            });
+
+            MockPredictedResult.Add(new PredictedResultModel
+            {
+                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
+                SubjectId = 3,
+                A = 83.5,
+                B = 18.5,
                 C = 5.5,
                 S = 1.3,
                 W = 0.5,
@@ -96,21 +107,10 @@ namespace Predictly_Api.Controllers
             {
                 UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
                 SubjectId = 7,
-                A = 18.5,
-                B = 83.5,
-                C = 5.5,
-                S = 1.3,
-                W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 8,
-                A = 18.5,
-                B = 83.5,
-                C = 5.5,
-                S = 1.3,
+                A = 58.5,
+                B = 13.5,
+                C = 15.5,
+                S = 11.3,
                 W = 0.5,
             });
         }

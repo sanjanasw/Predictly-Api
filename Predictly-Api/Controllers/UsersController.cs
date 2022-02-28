@@ -145,12 +145,11 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                var subjectsList = await _context.Subjects.ToListAsync();
                 var currentStatus = await _context.StudyData.Where(x => x.UserId == id).Select(x => new CurrentStatusViewModel
                 {
-                    Subject = subjectsList.Where(y => y.Id == x.sub).Select(z => z.Name).FirstOrDefault(),
+                    Subject = x.SubjectId.ToString(),
                     Commitment = x.Commitment,
-                    PredictedResult = new ResultViewModel
+                    Result = new ResultViewModel
                     {
                         A = 70,
                         B = 13,
@@ -159,6 +158,12 @@ namespace Predictly_Api.Controllers
                         W = 4
                     }
                 }).ToListAsync();
+
+                var subjectsList = await _context.Subjects.ToListAsync();
+                foreach (var item in currentStatus)
+                {
+                    item.Subject = subjectsList.Where(x => x.Id.ToString() == item.Subject).Select(y => y.Name).FirstOrDefault();
+                }
 
                 return Ok(currentStatus);
             }

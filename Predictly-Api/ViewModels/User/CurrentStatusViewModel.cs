@@ -7,7 +7,7 @@ namespace Predictly_Api.ViewModels.User
     {
         public string Subject { get; set; }
         public SubHours Commitment { get; set; } 
-        public ResultViewModel PredictedResult { get; set; }
+        public ResultViewModel Result { get; set; }
 
     }
 }
