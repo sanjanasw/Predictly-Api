@@ -150,12 +150,15 @@ namespace Predictly_Api.Controllers
                     predictedResults.Add(new PredictedResultViewModel
                     {
                         Subject = subjects.Where(x => x.Id == item.SubjectId).Select(x => x.Name).FirstOrDefault(),
-                        A = item.A,
-                        B = item.B,
-                        C = item.C,
-                        S = item.S,
-                        W = item.W,
                         Goal = goal,
+                        Result = new ResultViewModel
+                        {
+                            A = item.A,
+                            B = item.B,
+                            C = item.C,
+                            S = item.S,
+                            W = item.W,
+                        }
                     });
                 }
                 dashboardData.PredictedResult = predictedResults;

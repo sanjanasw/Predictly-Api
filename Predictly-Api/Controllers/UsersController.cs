@@ -14,6 +14,7 @@ using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Enums;
 using System.Net.Mime;
 using Microsoft.Extensions.Logging;
+using Predictly_Api.ViewModels.Dashboard;
 
 namespace Predictly_Api.Controllers
 {
@@ -144,7 +145,22 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                return Ok();
+                var subjectsList = await _context.Subjects.ToListAsync();
+                var currentStatus = await _context.StudyData.Where(x => x.UserId == id).Select(x => new CurrentStatusViewModel
+                {
+                    Subject = subjectsList.Where(y => y.Id == x.sub).Select(z => z.Name).FirstOrDefault(),
+                    Commitment = x.Commitment,
+                    PredictedResult = new ResultViewModel
+                    {
+                        A = 70,
+                        B = 13,
+                        C = 7,
+                        S = 6,
+                        W = 4
+                    }
+                }).ToListAsync();
+
+                return Ok(currentStatus);
             }
             catch (Exception ex)
             {

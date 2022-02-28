@@ -11,7 +11,7 @@ namespace Predictly_Api.ViewModels.Authentication
         public UserInfo UserInfo { get; set; }
 
         [Required(ErrorMessage = "Study Data is required")]
-        public List<StudyDataModel> StudyData { get; set; }
+        public List<StudyDataViewModel> StudyData { get; set; }
 
     }
 
@@ -53,5 +53,15 @@ namespace Predictly_Api.ViewModels.Authentication
 
         [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; }
+    }
+
+    public class StudyDataViewModel
+    {
+        [Required(ErrorMessage ="Commitment is required")]
+        public SubHours Commitment { get; set; }
+        [Required(ErrorMessage = "Class status is required")]
+        public bool ClassStatus { get; set; }
+        [Required(ErrorMessage = "Marks average is required")]
+        public double AvgMarks { get; set; }
     }
 }

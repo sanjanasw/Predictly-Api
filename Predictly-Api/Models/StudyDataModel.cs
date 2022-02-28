@@ -10,6 +10,8 @@ namespace Predictly_Api.Models
         [Required]
         public string UserId { get; set; }
         [Required]
+        public int SubjectId { get; set; }
+        [Required]
         public SubHours Commitment { get; set; }
         [Required]
         public bool ClassStatus { get; set; }

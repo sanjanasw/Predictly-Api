@@ -765,7 +765,6 @@ namespace Predictly_Api.Controllers
                             </center>";
                         break;
                     case "verified":
-                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
                         subject = "Sign-up Verification Vaccination Management System";
                         html =
                         $@" <center><img
@@ -790,7 +789,7 @@ namespace Predictly_Api.Controllers
                                     text-transform: uppercase;
                                     text-decoration: none;
                                 ""
-                                href=""{verifyUrl}""
+                                href=""https://predictly.z13.web.core.windows.net/auth/login""
                                 >
                                 Continue to Login
                                 </a></center>";

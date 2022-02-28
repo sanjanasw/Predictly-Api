@@ -12,6 +12,11 @@ namespace Predictly_Api.ViewModels.Dashboard
     {
         public string Subject { get; set; }
         public string Goal { get; set; }
+        public ResultViewModel Result { get; set; }
+    }
+
+    public class ResultViewModel
+    {
         public double A { get; set; }
         public double B { get; set; }
         public double C { get; set; }
