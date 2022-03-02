@@ -457,6 +457,84 @@ namespace Predictly_Api.Controllers
         }
 
         /// <summary>
+        /// Add study data.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /study-data
+        ///      {
+        ///         "subjectId": 1,
+        ///         "commitment": 0,
+        ///         "classsStatus": 2,
+        ///         "avgMarks" :75
+        ///      }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns newly created subject</response>
+        /// <response code="400">Selected subject invalid</response>
+        /// <response code="404">User not found</response>
+        [HttpPost("study-data")]
+        public async Task<ActionResult> AddStudyData(StudyDataViewModel model)
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var bucket = await _context.Subjects.Where(x => x.Id == model.SubjectId).Select(x => x.BucketType).FirstOrDefaultAsync();
+
+                    var accessToken = await HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var userId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                    }
+
+                    switch (bucket)
+                    {
+                        case 1:
+                            user.BSub1 = model.SubjectId;
+                            break;
+                        case 2:
+                            user.BSub2 = model.SubjectId;
+                            break;
+                        case 3:
+                            user.BSub3 = model.SubjectId;
+                            break;
+                        default:
+                            return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Selected subject is invalid!" });
+                    }
+
+                    var result = await _userManager.UpdateAsync(user);
+                    var studyData = new StudyDataModel
+                    {
+                        SubjectId = model.SubjectId,
+                        Commitment = model.Commitment,
+                        AvgMarks = model.AvgMarks,
+                        ClassStatus = model.ClassStatus,
+                        UserId = user.Id
+                    };
+                    _context.StudyData.Add(studyData);
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    _logger.LogInformation(string.Format("{0} is updated study data.", user.UserName));
+                    return Ok(studyData);
+
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in PUT: user/study-data.");
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
         /// Update study data.
         /// </summary>
         /// <remarks>
