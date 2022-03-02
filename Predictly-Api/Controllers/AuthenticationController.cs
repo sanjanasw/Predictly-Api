@@ -217,6 +217,7 @@ namespace Predictly_Api.Controllers
                             Commitment = item.Commitment,
                             AvgMarks = item.AvgMarks,
                             ClassStatus = item.ClassStatus,
+                            SubjectId = item.SubjectId
                         });
                     };
                     _context.SaveChanges();

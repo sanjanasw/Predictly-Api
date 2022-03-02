@@ -147,16 +147,12 @@ namespace Predictly_Api.Controllers
 
                 var currentStatus = await _context.StudyData.Where(x => x.UserId == id).Select(x => new CurrentStatusViewModel
                 {
+                    Id = x.Id,
                     Subject = x.SubjectId.ToString(),
+                    SubjectId = x.SubjectId,
                     Commitment = x.Commitment,
-                    Result = new ResultViewModel
-                    {
-                        A = 70,
-                        B = 13,
-                        C = 7,
-                        S = 6,
-                        W = 4
-                    }
+                    ClassStatus = x.ClassStatus,
+                    AvgMarks = x.AvgMarks
                 }).ToListAsync();
 
                 var subjectsList = await _context.Subjects.ToListAsync();
@@ -431,41 +427,19 @@ namespace Predictly_Api.Controllers
         /// Sample request:
         ///
         ///     PUT /study-data
-        ///     "studyData": {
-        ///         "sub1Hours": 0,
-        ///         "sub1Class": true,
-        ///         "sub1AvgMarks": 45,
-        ///         "sub2Hours": 1,
-        ///         "sub2Class": true,
-        ///         "sub2AvgMarks": 0,
-        ///         "sub3Hours": 3,
-        ///         "sub3Class": false,
-        ///         "sub3AvgMarks": 67,
-        ///         "sub4Hours": 0,
-        ///         "sub4Class": true,
-        ///         "sub4AvgMarks": 56,
-        ///         "sub5Hours": 1,
-        ///         "sub5Class": false,
-        ///         "sub5AvgMarks": 46,
-        ///         "sub6Hours": 2,
-        ///         "sub6Class": true,
-        ///         "sub6AvgMarks": 98,
-        ///         "sub7Hours": 2,
-        ///         "sub7Class": true,
-        ///         "sub7AvgMarks": 78,
-        ///         "sub8Hours": 4,
-        ///         "sub8Class": false,
-        ///         "sub8AvgMarks": 56,
-        ///         "sub9Hours": 0,
-        ///         "sub9Class": true,
-        ///         "sub9AvgMarks": 53
+        ///      {
+        ///         "id": 1,
+        ///         "subjectId": 1,
+        ///         "commitment": 0,
+        ///         "classsStatus": 2,
+        ///         "avgMarks" :75
         ///      }
         ///
         /// </remarks>
-        /// <response code="200">Returns updated user data</response>
+        /// <response code="200">Returns success Message</response>
         /// <response code="404">User not found</response>
         [HttpPut("study-data")]
-        public async Task<ActionResult> PutStudyData(StudyDataModel model)
+        public async Task<ActionResult> PutStudyData(StudyDataUpdateViewModel model)
         {
             try
             {
@@ -479,9 +453,17 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                model.UserId = user.Id;
+                var updateData = new StudyDataModel
+                {
+                    Id = model.Id,
+                    SubjectId = model.SubjectId,
+                    AvgMarks = model.AvgMarks,
+                    ClassStatus = model.ClassStatus,
+                    Commitment = model.Commitment,
+                    UserId = id
+                };
 
-                _context.Entry(model).State = EntityState.Modified;
+                _context.Entry(updateData).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
                 _logger.LogInformation(string.Format("{0} is updated study data.", user.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Study data update successfully!" });

@@ -1,16 +1,14 @@
 ﻿using Predictly_Api.Enums;
-using Predictly_Api.ViewModels.Dashboard;
+using System.ComponentModel.DataAnnotations;
 
 namespace Predictly_Api.ViewModels.User
 {
-    public class CurrentStatusViewModel
+    public class StudyDataUpdateViewModel
     {
         public int Id { get; set; }
-        public string Subject { get; set; }
         public int SubjectId { get; set; }
         public SubHours Commitment { get; set; }
         public bool ClassStatus { get; set; }
         public double AvgMarks { get; set; }
-
     }
 }

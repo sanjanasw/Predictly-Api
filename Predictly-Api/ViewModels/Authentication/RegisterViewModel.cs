@@ -59,6 +59,8 @@ namespace Predictly_Api.ViewModels.Authentication
     {
         [Required(ErrorMessage ="Commitment is required")]
         public SubHours Commitment { get; set; }
+        [Required(ErrorMessage = "SubjectId is required")]
+        public int SubjectId { get; set; }
         [Required(ErrorMessage = "Class status is required")]
         public bool ClassStatus { get; set; }
         [Required(ErrorMessage = "Marks average is required")]
