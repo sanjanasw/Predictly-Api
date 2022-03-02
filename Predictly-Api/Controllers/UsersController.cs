@@ -165,7 +165,43 @@ namespace Predictly_Api.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occcured in GET: user/profile.");
+                _logger.LogError(ex, "Error occcured in GET: user/student/current-status.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get students bucket subject status.
+        /// </summary>
+        /// <response code="200">Returns users profile</response>
+        /// <response code="404">User not found</response>
+        [HttpGet("student/buckets-status")]
+        public async Task<ActionResult<BucketsStatusViewModel>> GetBucketsStatus()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                }
+
+                var bucketStatus = new BucketsStatusViewModel
+                {
+                    Bucket1 = user.BSub1 != 0,
+                    Bucket2 = user.BSub2 != 0,
+                    Bucket3 = user.BSub3 != 0
+                };
+
+                return Ok(bucketStatus);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: user/student/current-status.");
                 throw;
             }
         }
@@ -437,17 +473,23 @@ namespace Predictly_Api.Controllers
         ///
         /// </remarks>
         /// <response code="200">Returns success Message</response>
+        /// <response code="400">Study data ids not matching</response>
         /// <response code="404">User not found</response>
-        [HttpPut("study-data")]
-        public async Task<ActionResult> PutStudyData(StudyDataUpdateViewModel model)
+        [HttpPut("study-data/{id}")]
+        public async Task<ActionResult> PutStudyData(StudyDataUpdateViewModel model, int id)
         {
             try
             {
+                if (id != model.Id)
+                {
+                    return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
+                }
+
                 var accessToken = await HttpContext.GetTokenAsync("access_token");
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+                var userId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
-                var user = await _userManager.FindByIdAsync(id);
+                var user = await _userManager.FindByIdAsync(userId);
                 if (user == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
@@ -460,7 +502,7 @@ namespace Predictly_Api.Controllers
                     AvgMarks = model.AvgMarks,
                     ClassStatus = model.ClassStatus,
                     Commitment = model.Commitment,
-                    UserId = id
+                    UserId = userId
                 };
 
                 _context.Entry(updateData).State = EntityState.Modified;
