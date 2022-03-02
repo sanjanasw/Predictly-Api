@@ -147,29 +147,62 @@ namespace Predictly_Api.Controllers
 
                 var currentStatus = await _context.StudyData.Where(x => x.UserId == id).Select(x => new CurrentStatusViewModel
                 {
-                    Subject = x.SubjectId.ToString(),
+                    Id = x.Id,
+                    SubjectId = x.SubjectId,
                     Commitment = x.Commitment,
-                    Result = new ResultViewModel
-                    {
-                        A = 70,
-                        B = 13,
-                        C = 7,
-                        S = 6,
-                        W = 4
-                    }
+                    ClassStatus = x.ClassStatus,
+                    AvgMarks = x.AvgMarks,
                 }).ToListAsync();
 
                 var subjectsList = await _context.Subjects.ToListAsync();
                 foreach (var item in currentStatus)
                 {
-                    item.Subject = subjectsList.Where(x => x.Id.ToString() == item.Subject).Select(y => y.Name).FirstOrDefault();
+                    var subjectInfo = subjectsList.Where(x => x.Id == item.SubjectId).Select(y => new {y.Name , y.BucketType}).FirstOrDefault();
+                    item.Subject = subjectInfo.Name;
+                    item.BucketType = subjectInfo.BucketType;
                 }
 
                 return Ok(currentStatus);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error occcured in GET: user/profile.");
+                _logger.LogError(ex, "Error occcured in GET: user/student/current-status.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Get students bucket subject status.
+        /// </summary>
+        /// <response code="200">Returns users profile</response>
+        /// <response code="404">User not found</response>
+        [HttpGet("student/buckets-status")]
+        public async Task<ActionResult<BucketsStatusViewModel>> GetBucketsStatus()
+        {
+            try
+            {
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var user = await _userManager.FindByIdAsync(id);
+                if (user == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                }
+
+                var bucketStatus = new BucketsStatusViewModel
+                {
+                    Bucket1 = user.BSub1 != 0,
+                    Bucket2 = user.BSub2 != 0,
+                    Bucket3 = user.BSub3 != 0
+                };
+
+                return Ok(bucketStatus);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: user/student/current-status.");
                 throw;
             }
         }
@@ -425,72 +458,220 @@ namespace Predictly_Api.Controllers
         }
 
         /// <summary>
+        /// Add study data.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /study-data
+        ///      {
+        ///         "subjectId": 1,
+        ///         "commitment": 0,
+        ///         "classsStatus": 2,
+        ///         "avgMarks" :75
+        ///      }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns newly created subject</response>
+        /// <response code="400">Selected subject invalid</response>
+        /// <response code="404">User not found</response>
+        [HttpPost("study-data")]
+        public async Task<ActionResult> AddStudyData(StudyDataInsertViewModel model)
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync())
+            {
+                try
+                {
+                    var subjectInfo = await _context.Subjects.Where(x => x.Id == model.SubjectId).Select(x => new { x.BucketType, x.Name }).FirstOrDefaultAsync();
+
+                    var accessToken = await HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var userId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                    }
+
+                    switch (subjectInfo.BucketType)
+                    {
+                        case 1:
+                            user.BSub1 = model.SubjectId;
+                            break;
+                        case 2:
+                            user.BSub2 = model.SubjectId;
+                            break;
+                        case 3:
+                            user.BSub3 = model.SubjectId;
+                            break;
+                        default:
+                            return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Selected subject is invalid!" });
+                    }
+
+                    await _userManager.UpdateAsync(user);
+                    var studyData = new StudyDataModel
+                    {
+                        SubjectId = model.SubjectId,
+                        Commitment = model.Commitment,
+                        AvgMarks = model.AvgMarks,
+                        ClassStatus = model.ClassStatus,
+                        UserId = user.Id
+                    };
+                    _context.StudyData.Add(studyData);
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+
+                    var currentStatus = new CurrentStatusViewModel
+                    {
+                        BucketType = subjectInfo.BucketType,
+                        SubjectId = model.SubjectId,
+                        Subject = subjectInfo.Name,
+                        AvgMarks = model.AvgMarks,
+                        ClassStatus = model.ClassStatus,
+                        Commitment = model.Commitment,
+                        Id = studyData.Id,
+                    };
+
+                    _logger.LogInformation(string.Format("{0} is added study data.", user.UserName));
+                    return Ok(currentStatus);
+
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in POST: user/study-data.");
+                    throw;
+                }
+            }
+        }
+
+        /// <summary>
         /// Update study data.
         /// </summary>
         /// <remarks>
         /// Sample request:
         ///
         ///     PUT /study-data
-        ///     "studyData": {
-        ///         "sub1Hours": 0,
-        ///         "sub1Class": true,
-        ///         "sub1AvgMarks": 45,
-        ///         "sub2Hours": 1,
-        ///         "sub2Class": true,
-        ///         "sub2AvgMarks": 0,
-        ///         "sub3Hours": 3,
-        ///         "sub3Class": false,
-        ///         "sub3AvgMarks": 67,
-        ///         "sub4Hours": 0,
-        ///         "sub4Class": true,
-        ///         "sub4AvgMarks": 56,
-        ///         "sub5Hours": 1,
-        ///         "sub5Class": false,
-        ///         "sub5AvgMarks": 46,
-        ///         "sub6Hours": 2,
-        ///         "sub6Class": true,
-        ///         "sub6AvgMarks": 98,
-        ///         "sub7Hours": 2,
-        ///         "sub7Class": true,
-        ///         "sub7AvgMarks": 78,
-        ///         "sub8Hours": 4,
-        ///         "sub8Class": false,
-        ///         "sub8AvgMarks": 56,
-        ///         "sub9Hours": 0,
-        ///         "sub9Class": true,
-        ///         "sub9AvgMarks": 53
+        ///      {
+        ///         "id": 1,
+        ///         "subjectId": 1,
+        ///         "commitment": 0,
+        ///         "classsStatus": 2,
+        ///         "avgMarks" :75
         ///      }
         ///
         /// </remarks>
-        /// <response code="200">Returns updated user data</response>
+        /// <response code="200">Returns success Message</response>
+        /// <response code="400">Study data ids not matching</response>
         /// <response code="404">User not found</response>
-        [HttpPut("study-data")]
-        public async Task<ActionResult> PutStudyData(StudyDataModel model)
+        [HttpPut("study-data/{id}")]
+        public async Task<ActionResult> PutStudyData(StudyDataUpdateViewModel model, int id)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
-
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null)
+                try
                 {
-                    return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                    if (id != model.Id)
+                    {
+                        return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
+                    }
+
+                    var accessToken = await HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var userId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                    }
+
+                    var updateData = new StudyDataModel
+                    {
+                        Id = model.Id,
+                        SubjectId = model.SubjectId,
+                        AvgMarks = model.AvgMarks,
+                        ClassStatus = model.ClassStatus,
+                        Commitment = model.Commitment,
+                        UserId = userId
+                    };
+
+                    _context.Entry(updateData).State = EntityState.Modified;
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    _logger.LogInformation(string.Format("{0} is updated study data.", user.UserName));
+                    return Ok(new ResponseModel { Status = "Success", Message = "Study data update successfully!" });
+
                 }
-
-                model.UserId = user.Id;
-
-                _context.Entry(model).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-                _logger.LogInformation(string.Format("{0} is updated study data.", user.UserName));
-                return Ok(new ResponseModel { Status = "Success", Message = "Study data update successfully!" });
-
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in PUT: user/study-data.");
+                    throw;
+                }
             }
-            catch (Exception ex)
+        }
+
+        /// <summary>
+        /// Delete study data [Bucket Subject Data].
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success Message</response>
+        /// <response code="400">Cannot remove core subject</response>
+        /// <response code="404">User not found</response>
+        [HttpDelete("study-data/{id}")]
+        public async Task<ActionResult> DeleteStudyData(int id)
+        {
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-                _logger.LogError(ex, "Error occcured in PUT: user/study-data.");
-                throw;
+                try
+                {
+                    var accessToken = await HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var userId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user == null)
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
+                    }
+
+                    var studyData = await _context.StudyData.Where(x => x.Id == id).FirstOrDefaultAsync();
+                    var subjectInfo = await _context.Subjects.Where(x => x.Id == studyData.SubjectId).Select(x => new { x.BucketType, x.Name }).FirstOrDefaultAsync();
+                    switch (subjectInfo.BucketType)
+                    {
+                        case 1:
+                            user.BSub1 = 0;
+                            break;
+                        case 2:
+                            user.BSub2 = 0;
+                            break;
+                        case 3:
+                            user.BSub3 = 0;
+                            break;
+                        default:
+                            return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Cannot remove core subjects!" });
+                    }
+
+                    _context.StudyData.Remove(studyData);
+                    await _userManager.UpdateAsync(user);
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    _logger.LogInformation(string.Format("{0} is deleted study data.", user.UserName));
+                    return Ok(new ResponseModel { Status = "Success", Message = "Study data deleted successfully!" });
+
+                }
+                catch (Exception ex)
+                {
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in DELETE: user/study-data.");
+                    throw;
+                }
             }
         }
     }
