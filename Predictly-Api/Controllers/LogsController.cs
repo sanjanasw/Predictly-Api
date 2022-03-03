@@ -39,7 +39,7 @@ namespace Predictly_Api.Controllers
             {
                 Message = x.Message,
                 Exception = x.Exception,
-                TimeStamp = x.TimeStamp.ToString("dd/MM/yyyyy HH:mm:ss"),
+                TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
             }).ToListAsync();
 
             return Ok(logs);
@@ -57,7 +57,7 @@ namespace Predictly_Api.Controllers
             {
                 Message = x.Message,
                 Exception = x.Exception,
-                TimeStamp = x.TimeStamp.ToString("dd/MM/yyyyy HH:mm:ss"),
+                TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
             }).ToListAsync();
 
             return Ok(logs);
@@ -75,7 +75,7 @@ namespace Predictly_Api.Controllers
             {
                 Message = x.Message,
                 Exception = x.Exception,
-                TimeStamp = x.TimeStamp.ToString("dd/MM/yyyyy HH:mm:ss"),
+                TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
             }).ToListAsync();
 
             return Ok(logs);
