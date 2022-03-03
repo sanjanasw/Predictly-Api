@@ -20,8 +20,11 @@ namespace Predictly_Api.ViewModels.User
         [EmailAddress]
         [Required(ErrorMessage = "Email is required")]
         public string Email { get; set; }
+
         public Genders Gender { get; set; }
+
         public int SchoolId { get; set; }
+
         public int OLYear { get; set; } = 0;
 
     }

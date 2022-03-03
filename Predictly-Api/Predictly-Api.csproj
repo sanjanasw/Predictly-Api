@@ -40,5 +40,11 @@
     <None Remove="Serilog.AspNetCore" />
     <None Remove="Serilog.Settings.Configuration" />
     <None Remove="Serilog.Sinks.MSSqlServer" />
+    <None Remove="ViewModels\Goal\" />
+    <None Remove="Filters\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="ViewModels\Goal\" />
+    <Folder Include="Filters\" />
   </ItemGroup>
 </Project>
