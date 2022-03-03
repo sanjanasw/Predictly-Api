@@ -35,12 +35,13 @@ namespace Predictly_Api.Controllers
         [HttpGet("information")]
         public async Task<ActionResult<LogsViewModel>> GetInformations()
         {
-            var logs =  await _context.Logs.Where(x => x.Level == "Information").Select(x => new LogsViewModel
-            {
-                Message = x.Message,
-                Exception = x.Exception,
-                TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
-            }).ToListAsync();
+            var logs = await _context.Logs.Where(x => x.Level == "Information").OrderByDescending(x => x.TimeStamp).
+                Select(x => new LogsViewModel
+                {
+                    Message = x.Message,
+                    Exception = x.Exception,
+                    TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
+                }).ToListAsync();
 
             return Ok(logs);
         }
@@ -53,13 +54,13 @@ namespace Predictly_Api.Controllers
         [HttpGet("warning")]
         public async Task<ActionResult<LogsViewModel>> GetWarnings()
         {
-            var logs = await _context.Logs.Where(x => x.Level == "Warning").Select(x => new LogsViewModel
-            {
-                Message = x.Message,
-                Exception = x.Exception,
-                TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
-            }).ToListAsync();
-
+            var logs = await _context.Logs.Where(x => x.Level == "Warning").OrderByDescending(x => x.TimeStamp).
+                Select(x => new LogsViewModel
+                {
+                    Message = x.Message,
+                    Exception = x.Exception,
+                    TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
+                }).ToListAsync();
             return Ok(logs);
         }
 
@@ -71,12 +72,13 @@ namespace Predictly_Api.Controllers
         [HttpGet("error")]
         public async Task<ActionResult<LogsViewModel>> GetErrors()
         {
-            var logs = await _context.Logs.Where(x => x.Level == "Error").Select(x => new LogsViewModel
-            {
-                Message = x.Message,
-                Exception = x.Exception,
-                TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
-            }).ToListAsync();
+            var logs = await _context.Logs.Where(x => x.Level == "Error").OrderByDescending(x => x.TimeStamp).
+                Select(x => new LogsViewModel
+                {
+                    Message = x.Message,
+                    Exception = x.Exception,
+                    TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
+                }).ToListAsync();
 
             return Ok(logs);
         }
