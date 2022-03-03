@@ -1,21 +1,20 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using Predictly_Api.Enums;
-using Predictly_Api.Models;
 
 namespace Predictly_Api.ViewModels.Authentication
 {
     public class RegisterViewModel
     {
         [Required(ErrorMessage = "User Info is required")]
-        public UserInfo UserInfo { get; set; }
+        public UserInfoViewModel UserInfo { get; set; }
 
         [Required(ErrorMessage = "Study Data is required")]
         public List<StudyDataViewModel> StudyData { get; set; }
 
     }
 
-    public class UserInfo
+    public class UserInfoViewModel
     {
         [Required(ErrorMessage = "First Name is required")]
         public string FirstName { get; set; }
@@ -59,10 +58,13 @@ namespace Predictly_Api.ViewModels.Authentication
     {
         [Required(ErrorMessage ="Commitment is required")]
         public SubHours Commitment { get; set; }
+
         [Required(ErrorMessage = "SubjectId is required")]
         public int SubjectId { get; set; }
+
         [Required(ErrorMessage = "Class status is required")]
         public bool ClassStatus { get; set; }
+
         [Required(ErrorMessage = "Marks average is required")]
         public double AvgMarks { get; set; }
     }

@@ -1,9 +1,4 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
 using Predictly_Api.Enums;
 
 namespace Predictly_Api.Models
@@ -32,6 +27,7 @@ namespace Predictly_Api.Models
         public int BSub3 { get; set; } = 0;
 
         public bool DeleteStatus { get; set; } = false;
+
         public EducationLevels FathersEduLevel { get; set; } = EducationLevels.Phd;
 
         public EducationLevels MothersEduLevel { get; set; } = EducationLevels.Phd;

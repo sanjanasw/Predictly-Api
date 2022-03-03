@@ -1,5 +1,4 @@
-﻿using Predictly_Api.Enums;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Predictly_Api.ViewModels.Dashboard
 {
@@ -11,16 +10,22 @@ namespace Predictly_Api.ViewModels.Dashboard
     public class PredictedResultViewModel
     {
         public string Subject { get; set; }
+
         public string Goal { get; set; }
+
         public ResultViewModel Result { get; set; }
     }
 
     public class ResultViewModel
     {
         public double A { get; set; }
+
         public double B { get; set; }
+
         public double C { get; set; }
+
         public double S { get; set; }
+
         public double W { get; set; }
     }
 }

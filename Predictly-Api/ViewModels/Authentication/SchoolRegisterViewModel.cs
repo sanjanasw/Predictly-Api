@@ -6,13 +6,13 @@ namespace Predictly_Api.ViewModels.Authentication
     public class SchoolRegisterViewModel
     {
         [Required(ErrorMessage = "User info is required")]
-        public SchoolUserInfo UserInfo { get; set; }
+        public SchoolUserInfoViewModel UserInfo { get; set; }
 
         [Required(ErrorMessage = "School info is required")]
-        public SchoolInfo SchoolInfo { get; set; }
+        public SchoolInfoViewModel SchoolInfo { get; set; }
     }
 
-    public class SchoolUserInfo
+    public class SchoolUserInfoViewModel
     {
         [Required(ErrorMessage = "First Name is required")]
         public string FirstName { get; set; }
@@ -34,7 +34,7 @@ namespace Predictly_Api.ViewModels.Authentication
         public string Password { get; set; }
     }
 
-    public class SchoolInfo
+    public class SchoolInfoViewModel
     {
         [Required(ErrorMessage = "School name is required")]
         public string Name { get; set; }

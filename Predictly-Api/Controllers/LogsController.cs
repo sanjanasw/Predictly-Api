@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -33,10 +32,10 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns information logs list</response>
         /// <response code="403">Forbidden</response>
         [HttpGet("information")]
-        public async Task<ActionResult<LogsViewModel>> GetInformations()
+        public async Task<ActionResult<LogViewModel>> GetInformations()
         {
             var logs = await _context.Logs.Where(x => x.Level == "Information").OrderByDescending(x => x.TimeStamp).
-                Select(x => new LogsViewModel
+                Select(x => new LogViewModel
                 {
                     Message = x.Message,
                     Exception = x.Exception,
@@ -52,10 +51,10 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns warning logs list</response>
         /// <response code="403">Forbidden</response>
         [HttpGet("warning")]
-        public async Task<ActionResult<LogsViewModel>> GetWarnings()
+        public async Task<ActionResult<LogViewModel>> GetWarnings()
         {
             var logs = await _context.Logs.Where(x => x.Level == "Warning").OrderByDescending(x => x.TimeStamp).
-                Select(x => new LogsViewModel
+                Select(x => new LogViewModel
                 {
                     Message = x.Message,
                     Exception = x.Exception,
@@ -70,10 +69,10 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns error logs list</response>
         /// <response code="403">Forbidden</response>
         [HttpGet("error")]
-        public async Task<ActionResult<LogsViewModel>> GetErrors()
+        public async Task<ActionResult<LogViewModel>> GetErrors()
         {
             var logs = await _context.Logs.Where(x => x.Level == "Error").OrderByDescending(x => x.TimeStamp).
-                Select(x => new LogsViewModel
+                Select(x => new LogViewModel
                 {
                     Message = x.Message,
                     Exception = x.Exception,
