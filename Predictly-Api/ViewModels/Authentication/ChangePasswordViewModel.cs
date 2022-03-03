@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace VMS_API.ViewModels.Authentication
+namespace Predictly_Api.ViewModels.Authentication
 {
     public class ChangePasswordViewModel
     {

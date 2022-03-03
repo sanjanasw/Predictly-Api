@@ -44,7 +44,6 @@
     <None Remove="Filters\" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="ViewModels\Goal\" />
     <Folder Include="Filters\" />
   </ItemGroup>
 </Project>

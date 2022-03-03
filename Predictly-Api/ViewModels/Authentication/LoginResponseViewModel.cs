@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace VMS_API.ViewModels.Authentication
+namespace Predictly_Api.ViewModels.Authentication
 {
     public class LoginResponseViewModel
     {

@@ -1,20 +1,20 @@
-﻿using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
-using Predictly_Api.Models;
-using Predictly_Api.ViewModels.User;
-using Microsoft.EntityFrameworkCore;
-using Predictly_Api.Enums;
 using System.Net.Mime;
 using Microsoft.Extensions.Logging;
-using Predictly_Api.ViewModels.Dashboard;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Predictly_Api.Models;
+using Predictly_Api.ViewModels.User;
+
+using Predictly_Api.Enums;
 
 namespace Predictly_Api.Controllers
 {
