@@ -1,105 +1,197 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Net.Mime;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Predictly_Api.Enums;
 using Predictly_Api.Models;
+using Predictly_Api.ViewModels.Goal;
 
 namespace Predictly_Api.Controllers
 {
+    [Authorize]
     [Route("goal")]
     [ApiController]
+    [Produces(MediaTypeNames.Application.Json)]
+    [Consumes(MediaTypeNames.Application.Json)]
     public class GoalController : ControllerBase
     {
+        private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly ILogger<GoalController> _logger;
 
-        public GoalController(ApplicationDbContext context)
+        public GoalController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<GoalController> logger)
         {
+            _userManager = userManager;
             _context = context;
+            _logger = logger;
         }
 
-        // GET: api/Goal
+        /// <summary>
+        /// Get students goals.
+        /// </summary>
+        /// <response code="200">Returns users goals</response>
+        /// <response code="404">User not found</response>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<GoalModel>>> GetGoals()
         {
-            return await _context.Goals.ToListAsync();
-        }
-
-        // GET: api/Goal/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<GoalModel>> GetGoalModel(int id)
-        {
-            var goalModel = await _context.Goals.FindAsync(id);
-
-            if (goalModel == null)
-            {
-                return NotFound();
-            }
-
-            return goalModel;
-        }
-
-        // PUT: api/Goal/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutGoalModel(int id, GoalModel goalModel)
-        {
-            if (id != goalModel.Id)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(goalModel).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!GoalModelExists(id))
+
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+                if (loggedInUser == null)
                 {
-                    return NotFound();
+                    return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
+                }
+
+                var userSubjects = await _context.StudyData.Where(x => x.UserId == loggedInUserId).ToListAsync();
+                var userGoals = await _context.Goals.Where(x => x.UserId == loggedInUserId).ToListAsync();
+                var subjects = await _context.Subjects.ToListAsync();
+                var output = new List<GoalViewModel>();
+
+                foreach (var usersubject in userSubjects)
+                {
+                    var userGoal = userGoals.Where(x => x.SubjectId == usersubject.SubjectId).FirstOrDefault();
+                    output.Add(new GoalViewModel
+                    {
+                        Id = userGoal?.Id,
+                        SubjectId = usersubject.SubjectId,
+                        Goal = userGoal?.Goal,
+                        Subject = subjects.Where(x => x.Id == usersubject.SubjectId).Select(x => x.Name).FirstOrDefault()
+                    });
+                }
+                return Ok(output);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in GET: goal.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Set new goals.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /goal
+        ///     {
+        ///        "subjectId": "2",
+        ///        "goal: "A"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="404">User not found</response>
+        [HttpPost]
+        public async Task<ActionResult<GoalModel>> PostGoalModel(GoalCreateViewModel goalModel)
+        {
+            try
+            {
+
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+                if (loggedInUser == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
+                }
+
+                var goal = new GoalModel
+                {
+                    Goal = goalModel.Goal,
+                    SubjectId = goalModel.SubjectId,
+                    UserId = loggedInUserId,
+                };
+                _context.Goals.Add(goal);
+                await _context.SaveChangesAsync();
+                _logger.LogInformation(string.Format("{0} is updated goal settings.", loggedInUser.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "Goal updated successfull!" });
+            }
+            catch(Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in POST: goal.");
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// Update goals.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /goal
+        ///     {
+        ///        "Id": "2",
+        ///        "goal: "A"
+        ///     }
+        ///
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="404">User not found</response>
+        [HttpPut("{id}")]
+        public async Task<ActionResult<ResponseModel>> PutGoalModel(int id, GoalUpdateViewModel goalModel)
+        {
+            try
+            {
+
+                var accessToken = await HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+                if (loggedInUser == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
+                }
+
+                if (id != goalModel.Id)
+                {
+                    return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
+                }
+
+                var goal = await _context.Goals.Where(x => x.Id == goalModel.Id).FirstOrDefaultAsync();
+
+                if (goal == null)
+                {
+                    return NotFound(new ResponseModel { Status = "Error", Message = "Goal not found!" });
+                }
+
+                if(goalModel.Goal == Results.W)
+                {
+                    _context.Goals.Remove(goal);
                 }
                 else
                 {
-                    throw;
+                    goal.Goal = goalModel.Goal;
+                    _context.Entry(goal).State = EntityState.Modified;
                 }
+
+                await _context.SaveChangesAsync();
+                _logger.LogInformation(string.Format("{0} is updated goal settings.", loggedInUser.UserName));
+                return Ok(new ResponseModel { Status = "Success", Message = "Goal updated successfull!" });
             }
-
-            return NoContent();
-        }
-
-        // POST: api/Goal
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<GoalModel>> PostGoalModel(GoalModel goalModel)
-        {
-            _context.Goals.Add(goalModel);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetGoalModel", new { id = goalModel.Id }, goalModel);
-        }
-
-        // DELETE: api/Goal/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteGoalModel(int id)
-        {
-            var goalModel = await _context.Goals.FindAsync(id);
-            if (goalModel == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Error occcured in PUT: goal.");
+                throw;
             }
-
-            _context.Goals.Remove(goalModel);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
 
-        private bool GoalModelExists(int id)
-        {
-            return _context.Goals.Any(e => e.Id == id);
-        }
     }
 }
