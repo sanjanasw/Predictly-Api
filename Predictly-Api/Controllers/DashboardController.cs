@@ -127,15 +127,15 @@ namespace Predictly_Api.Controllers
             {
                 var accessToken = await HttpContext.GetTokenAsync("access_token");
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
+                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
-                var user = await _userManager.FindByIdAsync(id);
-                if (user == null)
+                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+                if (loggedInUser == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                var goals = await _context.Goals.Where(x => x.UserId == id).ToListAsync();
+                var goals = await _context.Goals.Where(x => x.UserId == loggedInUserId).ToListAsync();
                 var subjects = await _context.Subjects.ToListAsync();
                 var dashboardData = new StudentDashboardViewModel();
                 var predictedResults = new List<PredictedResultViewModel>();
