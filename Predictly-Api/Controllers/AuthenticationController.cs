@@ -492,31 +492,31 @@ namespace Predictly_Api.Controllers
             {
                 var accessToken = await HttpContext.GetTokenAsync("access_token");
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var id = token.Claims.First(claim => claim.Type == "nameid").Value;
-                var user = await _userManager.FindByIdAsync(id);
+                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
 
-                if (user == null)
+                if (loggedInUser == null)
                 {
                     return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
                 }
 
-                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(loggedInUser);
 
-                if (!await _userManager.CheckPasswordAsync(user, model.CurrentPassword))
+                if (!await _userManager.CheckPasswordAsync(loggedInUser, model.CurrentPassword))
                 {
-                    _logger.LogWarning(string.Format("{0} tried to change password with incorrect current password.", user.UserName));
+                    _logger.LogWarning(string.Format("{0} tried to change password with incorrect current password.", loggedInUser.UserName));
                     return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Current password is incorrect!" });
                 }
 
-                IdentityResult result = await _userManager.ResetPasswordAsync(user, resetToken, model.NewPassword);
+                IdentityResult result = await _userManager.ResetPasswordAsync(loggedInUser, resetToken, model.NewPassword);
 
                 if (!result.Succeeded)
                 {
                     return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Somethig went wrong!" });
                 }
 
-                SendEmail("passwordChanged", user.Email, null, null);
-                _logger.LogInformation(string.Format("{0} successfully changed password.", user.UserName));
+                SendEmail("passwordChanged", loggedInUser.Email, null, null);
+                _logger.LogInformation(string.Format("{0} successfully changed password.", loggedInUser.UserName));
                 return Ok(new ResponseModel { Status = "Success", Message = "Password change Successfull!" });
             }
             catch (Exception ex)
@@ -560,20 +560,20 @@ namespace Predictly_Api.Controllers
                 {
                     var accessToken = await HttpContext.GetTokenAsync("access_token");
                     var JWTtoken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                    var id = JWTtoken.Claims.First(claim => claim.Type == "nameid").Value;
-                    var creater = await _userManager.FindByIdAsync(id);
+                    var loggedInUserId = JWTtoken.Claims.First(claim => claim.Type == "nameid").Value;
+                    var loggedInUser  = await _userManager.FindByIdAsync(loggedInUserId);
 
                     var userExists = await _userManager.FindByNameAsync(model.Username);
                     var userEmailExists = await _userManager.FindByEmailAsync(model.Email);
 
                     if (userExists != null)
                     {
-                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing username: {1}.", creater.UserName, model.Username));
+                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing username: {1}.", loggedInUser.UserName, model.Username));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
                     }
                     else if (userEmailExists != null)
                     {
-                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing email: {1}.", creater.UserName, model.Email));
+                        _logger.LogWarning(string.Format("{0} is tried to create force-onboard account for existing email: {1}.", loggedInUser.UserName, model.Email));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
                     }
 
@@ -631,7 +631,7 @@ namespace Predictly_Api.Controllers
                         SchoolId = user.SchoolId,
                     };
 
-                    _logger.LogInformation(string.Format("{0}, new user onborded to username: {1}", creater.UserName, user.UserName));
+                    _logger.LogInformation(string.Format("{0}, new user onborded to username: {1}", loggedInUser.UserName, user.UserName));
                     SendEmail("newUser", null, user, token);
                     return Ok(userResponse);
                 }
