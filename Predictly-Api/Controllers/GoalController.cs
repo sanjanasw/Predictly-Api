@@ -40,7 +40,7 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns users goals</response>
         /// <response code="404">User not found</response>
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<GoalModel>>> GetGoals()
+        public async Task<ActionResult<IEnumerable<GoalViewModel>>> GetGoals()
         {
             try
             {
