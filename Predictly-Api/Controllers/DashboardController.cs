@@ -27,92 +27,11 @@ namespace Predictly_Api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<DashboardController> _logger;
 
-        // TODO: Remove with db integration
-        private List<PredictedResultModel> MockPredictedResult = new List<PredictedResultModel>();
-
         public DashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<DashboardController> logger)
         {
             _userManager = userManager;
             _context = context;
             _logger = logger;
-
-            // TODO: Remove with db integration
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-              UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-              SubjectId = 1,
-              A = 78.5,
-              B = 23.5,
-              C = 5.5,
-              S = 1.3,
-              W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 2,
-                A = 18.5,
-                B = 83.5,
-                C = 5.5,
-                S = 1.3,
-                W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 3,
-                A = 83.5,
-                B = 18.5,
-                C = 5.5,
-                S = 1.3,
-                W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 4,
-                A = 18.5,
-                B = 83.5,
-                C = 5.5,
-                S = 1.3,
-                W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 5,
-                A = 18.5,
-                B = 83.5,
-                C = 5.5,
-                S = 1.3,
-                W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 6,
-                A = 18.5,
-                B = 83.5,
-                C = 5.5,
-                S = 1.3,
-                W = 0.5,
-            });
-
-            MockPredictedResult.Add(new PredictedResultModel
-            {
-                UserId = "79949b2b-4752-47f6-9fab-a116e7590881",
-                SubjectId = 7,
-                A = 58.5,
-                B = 13.5,
-                C = 15.5,
-                S = 11.3,
-                W = 0.5,
-            });
         }
 
         /// <summary>
@@ -125,21 +44,22 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
-                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
-                if (loggedInUser == null)
+                var loggedInUser = _userManager.FindByIdAsync(loggedInUserId);
+                if (await loggedInUser == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                var goals = await _context.Goals.Where(x => x.UserId == loggedInUserId).ToListAsync();
-                var subjects = await _context.Subjects.ToListAsync();
+                var goals =  _context.Goals.Where(x => x.UserId == loggedInUserId).ToList();
+                var subjects =  _context.Subjects.ToList();
+                var preditedReault = _context.PredictedResults.Where(x => x.UserId != loggedInUserId).ToListAsync();
                 var dashboardData = new StudentDashboardViewModel();
                 var predictedResults = new List<PredictedResultViewModel>();
-                foreach(var item in MockPredictedResult)
+                foreach(var item in await preditedReault)
                 {
                     var subjectGoal = goals.Where(x => x.SubjectId == item.SubjectId).FirstOrDefault();
                     string goal = null;
