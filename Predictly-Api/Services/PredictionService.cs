@@ -17,11 +17,6 @@ namespace Predictly_Api.Services
 
     public class PredictionService : IPredictionService
     {
-
-        public PredictionService()
-        {
-        }
-
         public List<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results)
         {
 

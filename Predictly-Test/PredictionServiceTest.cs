@@ -1,9 +1,6 @@
-using Moq;
-using Predictly_Api.Controllers;
 using Predictly_Api.Models;
 using Predictly_Api.Services;
 using Predictly_Api.ViewModels.SchoolDashboard;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Xunit;
