@@ -74,8 +74,9 @@ namespace Predictly_Api
             // Configure strongly typed settings object
             services.Configure<AppSettings>(Configuration.GetSection("AppSettings"));
 
-            // COnfigure DI for application services
+            // Configure DI for application services
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IPredictionService, PredictionService>();
 
             // Swagger
             services.AddSwaggerGen(c =>

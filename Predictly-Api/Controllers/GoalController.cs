@@ -93,7 +93,7 @@ namespace Predictly_Api.Controllers
         ///     }
         ///
         /// </remarks>
-        /// <response code="200">Returns success message</response>
+        /// <response code="200">Returns goal Id</response>
         /// <response code="404">User not found</response>
         [HttpPost]
         public async Task<ActionResult<GoalModel>> PostGoalModel(GoalCreateViewModel goalModel)
@@ -120,7 +120,7 @@ namespace Predictly_Api.Controllers
                 _context.Goals.Add(goal);
                 await _context.SaveChangesAsync();
                 _logger.LogInformation(string.Format("{0} is updated goal settings.", loggedInUser.UserName));
-                return Ok(new ResponseModel { Status = "Success", Message = "Goal updated successfull!" });
+                return Ok(new { Id = goal.Id});
             }
             catch(Exception ex)
             {
@@ -135,7 +135,7 @@ namespace Predictly_Api.Controllers
         /// <remarks>
         /// Sample request:
         ///
-        ///     POST /goal
+        ///     PUT /goal
         ///     {
         ///        "Id": "2",
         ///        "goal: "A"
@@ -147,49 +147,54 @@ namespace Predictly_Api.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult<ResponseModel>> PutGoalModel(int id, GoalUpdateViewModel goalModel)
         {
-            try
+            using (var transaction = await _context.Database.BeginTransactionAsync())
             {
-
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
-                var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
-
-                var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
-                if (loggedInUser == null)
+                try
                 {
-                    return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
-                }
 
-                if (id != goalModel.Id)
+                    var accessToken = HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
+                    var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+
+                    var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
+                    if (loggedInUser == null)
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
+                    }
+
+                    if (id != goalModel.Id)
+                    {
+                        return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
+                    }
+
+                    var goal = await _context.Goals.Where(x => x.Id == goalModel.Id).FirstOrDefaultAsync();
+
+                    if (goal == null)
+                    {
+                        return NotFound(new ResponseModel { Status = "Error", Message = "Goal not found!" });
+                    }
+
+                    if (goalModel.Goal == Results.W)
+                    {
+                        _context.Goals.Remove(goal);
+                    }
+                    else
+                    {
+                        goal.Goal = goalModel.Goal;
+                        _context.Entry(goal).State = EntityState.Modified;
+                    }
+
+                    await _context.SaveChangesAsync();
+                    await transaction.CommitAsync();
+                    _logger.LogInformation(string.Format("{0} is updated goal settings.", loggedInUser.UserName));
+                    return Ok(new ResponseModel { Status = "Success", Message = "Goal updated successfull!" });
+                }
+                catch (Exception ex)
                 {
-                    return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
+                    await transaction.RollbackAsync();
+                    _logger.LogError(ex, "Error occcured in PUT: goal.");
+                    throw;
                 }
-
-                var goal = await _context.Goals.Where(x => x.Id == goalModel.Id).FirstOrDefaultAsync();
-
-                if (goal == null)
-                {
-                    return NotFound(new ResponseModel { Status = "Error", Message = "Goal not found!" });
-                }
-
-                if(goalModel.Goal == Results.W)
-                {
-                    _context.Goals.Remove(goal);
-                }
-                else
-                {
-                    goal.Goal = goalModel.Goal;
-                    _context.Entry(goal).State = EntityState.Modified;
-                }
-
-                await _context.SaveChangesAsync();
-                _logger.LogInformation(string.Format("{0} is updated goal settings.", loggedInUser.UserName));
-                return Ok(new ResponseModel { Status = "Success", Message = "Goal updated successfull!" });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error occcured in PUT: goal.");
-                throw;
             }
         }
 

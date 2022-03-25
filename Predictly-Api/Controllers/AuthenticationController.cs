@@ -19,6 +19,7 @@ using Predictly_Api.Models;
 using Predictly_Api.Services;
 using Predictly_Api.ViewModels.Authentication;
 using Predictly_Api.ViewModels.User;
+using Predictly_Api.Interfaces;
 
 namespace Predictly_Api.Controllers
 {
@@ -549,7 +550,7 @@ namespace Predictly_Api.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="409">User details conflict</response>
         /// <response code="500">Internal server error</response>
-        //[Authorize(Roles = "Admin, Staff")]
+        [Authorize(Roles = "Admin, Staff")]
         [HttpPost]
         [Route("force-onboard")]
         public async Task<ActionResult<StaffViewModel>> NewUser([FromBody] NewUserViewModel model)

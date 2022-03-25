@@ -56,7 +56,7 @@ namespace Predictly_Api.Controllers
 
                 var goals =  _context.Goals.Where(x => x.UserId == loggedInUserId).ToList();
                 var subjects =  _context.Subjects.ToList();
-                var preditedReault = _context.PredictedResults.Where(x => x.UserId != loggedInUserId).ToListAsync();
+                var preditedReault = _context.PredictedResults.Where(x => x.UserId == loggedInUserId).ToListAsync();
                 var dashboardData = new StudentDashboardViewModel();
                 var predictedResults = new List<PredictedResultViewModel>();
                 foreach(var item in await preditedReault)
