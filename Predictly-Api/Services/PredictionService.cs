@@ -12,21 +12,17 @@ namespace Predictly_Api.Services
 {
     public interface IPredictionService
     {
-        public IEnumerable<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results);
+        public List<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results);
     }
 
     public class PredictionService : IPredictionService
     {
-        private readonly ApplicationDbContext _context;
-        private readonly ILogger<PredictionService> _logger;
 
-        public PredictionService(ApplicationDbContext context, ILogger<PredictionService> logger)
+        public PredictionService()
         {
-            _context = context;
-            _logger = logger;
         }
 
-        public IEnumerable<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results)
+        public List<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results)
         {
 
             var predictedResults = new List<UserSubjectPrediction>();

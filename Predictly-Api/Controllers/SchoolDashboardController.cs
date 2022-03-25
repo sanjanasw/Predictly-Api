@@ -3,11 +3,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using Predictly_Api.Enums;
-using Predictly_Api.Interfaces;
 using Predictly_Api.Models;
-using Predictly_Api.ViewModels.SchoolDashboard;
-using System.Collections.Generic;
+using Predictly_Api.Services;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Mime;
@@ -39,7 +36,7 @@ namespace Predictly_Api.Controllers
 
         [Authorize(Roles ="Staff")]
         [HttpGet]
-        public async Task<IActionResult> IndexAsync()
+        public async Task<IActionResult> GetDashboardPredictions()
         {
             var accessToken = HttpContext.GetTokenAsync("access_token");
             var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;

@@ -19,7 +19,6 @@ using Predictly_Api.Models;
 using Predictly_Api.Services;
 using Predictly_Api.ViewModels.Authentication;
 using Predictly_Api.ViewModels.User;
-using Predictly_Api.Interfaces;
 
 namespace Predictly_Api.Controllers
 {
