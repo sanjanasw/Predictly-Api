@@ -55,12 +55,12 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
                 }
 
-                var userSubjects = _context.StudyData.Where(x => x.UserId == loggedInUserId).ToListAsync();
+                var userSubjects = _context.StudyData.Where(x => x.UserId == loggedInUserId).ToList();
                 var userGoals = _context.Goals.Where(x => x.UserId == loggedInUserId).ToList();
                 var subjects = _context.Subjects.ToList();
                 var output = new List<GoalViewModel>();
 
-                foreach (var usersubject in await userSubjects)
+                foreach (var usersubject in userSubjects)
                 {
                     var userGoal = userGoals.Where(x => x.SubjectId == usersubject.SubjectId).FirstOrDefault();
                     output.Add(new GoalViewModel

@@ -178,13 +178,13 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var userExists =  _userManager.FindByNameAsync(model.UserInfo.Username);
-                    var userEmailExists =  _userManager.FindByEmailAsync(model.UserInfo.Email);
-                    if (await userExists != null)
+                    var userExists =  await _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists = await  _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (userExists != null)
                     {
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
                     }
-                    else if (await userEmailExists != null)
+                    else if ( userEmailExists != null)
                     {
                         _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
@@ -273,13 +273,13 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var userExists =  _userManager.FindByNameAsync(model.UserInfo.Username);
-                    var userEmailExists =  _userManager.FindByEmailAsync(model.UserInfo.Email);
-                    if (await userExists != null)
+                    var userExists =  await _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if ( userExists != null)
                     {
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
                     }
-                    else if (await userEmailExists != null)
+                    else if ( userEmailExists != null)
                     {
                         _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
