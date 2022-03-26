@@ -31,27 +31,27 @@ namespace Predictly_Api.Controllers
             try
             {
 
-                var core = _context.Subjects.Where(x => x.BucketType == 0).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToListAsync();
+                var core = _context.Subjects.Where(x => x.BucketType == 0).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
                 if (core == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "Core subjects not found!" });
                 }
-                var B1 = _context.Subjects.Where(x => x.BucketType == 1).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToListAsync();
+                var B1 = _context.Subjects.Where(x => x.BucketType == 1).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
                 if (B1 == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "Bucket 1 subjects not found!" });
                 }
-                var B2 = _context.Subjects.Where(x => x.BucketType == 2).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToListAsync();
+                var B2 = _context.Subjects.Where(x => x.BucketType == 2).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
                 if (B2 == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "Bucket 2 subjects not found!" });
                 }
-                var B3 = _context.Subjects.Where(x => x.BucketType == 3).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToListAsync();
+                var B3 = _context.Subjects.Where(x => x.BucketType == 3).Select(x => new SubjectDataViewModel { Id = x.Id, Name = x.Name }).ToList();
                 if (B3 == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "Bucket 3 subjects not found!" });
                 }
-                return Ok(new SubjectViewModel { CoreSubjects = await core, Bucket1 = await B1, Bucket2 = await B2, Bucket3 = await B3 });
+                return Ok(new SubjectViewModel { CoreSubjects =  core, Bucket1 =  B1, Bucket2 =  B2, Bucket3 =  B3 });
             }
             catch (Exception)
             {

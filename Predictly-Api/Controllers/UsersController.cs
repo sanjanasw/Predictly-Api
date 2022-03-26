@@ -152,10 +152,10 @@ namespace Predictly_Api.Controllers
                     Commitment = x.Commitment,
                     ClassStatus = x.ClassStatus,
                     AvgMarks = x.AvgMarks,
-                }).ToListAsync();
+                }).ToList();
 
-                var subjectsList = await _context.Subjects.ToListAsync();
-                foreach (var item in await currentStatus)
+                var subjectsList = _context.Subjects.ToList();
+                foreach (var item in currentStatus)
                 {
                     var subjectInfo = subjectsList.Where(x => x.Id == item.SubjectId).Select(y => new {y.Name , y.BucketType}).FirstOrDefault();
                     item.Subject = subjectInfo.Name;
@@ -634,9 +634,9 @@ namespace Predictly_Api.Controllers
                         return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                     }
 
-                    var studyData = await _context.StudyData.Where(x => x.Id == id).FirstOrDefaultAsync();
-                    var subjectInfo = await _context.Subjects.Where(x => x.Id == studyData.SubjectId)
-                        .Select(x => new { x.BucketType, x.Name }).FirstOrDefaultAsync();
+                    var studyData = _context.StudyData.Where(x => x.Id == id).FirstOrDefault();
+                    var subjectInfo = _context.Subjects.Where(x => x.Id == studyData.SubjectId)
+                        .Select(x => new { x.BucketType, x.Name }).FirstOrDefault();
                     switch (subjectInfo.BucketType)
                     {
                         case 1:
@@ -654,8 +654,9 @@ namespace Predictly_Api.Controllers
 
                     _context.StudyData.Remove(studyData);
 
-                    var goal = await _context.Goals.Where(x => x.SubjectId == studyData.SubjectId && x.UserId == loggedInUserId).FirstOrDefaultAsync();
-                    _context.Goals.Remove(goal);
+                    var goal = _context.Goals.Where(x => x.SubjectId == studyData.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
+                    if (goal != null)
+                        _context.Goals.Remove(goal);
 
                     await _userManager.UpdateAsync(loggedInUser);
                     await _context.SaveChangesAsync();
