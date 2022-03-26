@@ -20,5 +20,6 @@ namespace Predictly_Api.Models
         public DbSet<SubjectModel> Subjects { get; set; }
         public DbSet<GoalModel> Goals { get; set; }
         public DbSet<LogModel> Logs { get; set; }
+        public DbSet<PredictedResultModel> PredictedResults { get; set; }
     }
 }

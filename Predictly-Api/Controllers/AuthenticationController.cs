@@ -178,13 +178,13 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
-                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                    if (userExists != null)
+                    var userExists =  _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists =  _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (await userExists != null)
                     {
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
                     }
-                    else if (userEmailExists != null)
+                    else if (await userEmailExists != null)
                     {
                         _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
@@ -225,8 +225,8 @@ namespace Predictly_Api.Controllers
                     if (!result.Succeeded)
                         return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
 
-                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    SendEmail("verify", null, user, confirmationToken);
+                    var confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    SendEmail("verify", null, user, await confirmationToken);
                     _logger.LogInformation(string.Format("{0} new student registered.", user.UserName));
                     return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
                 }
@@ -273,13 +273,13 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var userExists = await _userManager.FindByNameAsync(model.UserInfo.Username);
-                    var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
-                    if (userExists != null)
+                    var userExists =  _userManager.FindByNameAsync(model.UserInfo.Username);
+                    var userEmailExists =  _userManager.FindByEmailAsync(model.UserInfo.Email);
+                    if (await userExists != null)
                     {
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Username is already exists!" });
                     }
-                    else if (userEmailExists != null)
+                    else if (await userEmailExists != null)
                     {
                         _logger.LogWarning(string.Format("{0} is tried to create another account.", model.UserInfo.Email));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "Email is already exists!" });
@@ -321,8 +321,8 @@ namespace Predictly_Api.Controllers
                     if (!result.Succeeded)
                         return StatusCode(StatusCodes.Status500InternalServerError, new ResponseModel { Status = "Error", Message = "User creation failed! Please check user details and try again." });
 
-                    string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    SendEmail("verify", null, user, confirmationToken);
+                    var confirmationToken = _userManager.GenerateEmailConfirmationTokenAsync(user);
+                    SendEmail("verify", null, user, await confirmationToken);
                     _logger.LogInformation(string.Format("{0}, new school registered. School: {1}", user.UserName, school.Name));
                     return Ok(new ResponseModel { Status = "Success", Message = "User created successfully!" });
                 }
@@ -490,8 +490,8 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
 
@@ -500,7 +500,7 @@ namespace Predictly_Api.Controllers
                     return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
                 }
 
-                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(loggedInUser);
+                var resetToken = _userManager.GeneratePasswordResetTokenAsync(loggedInUser);
 
                 if (!await _userManager.CheckPasswordAsync(loggedInUser, model.CurrentPassword))
                 {
@@ -508,7 +508,7 @@ namespace Predictly_Api.Controllers
                     return StatusCode(StatusCodes.Status403Forbidden, new ResponseModel { Status = "Error", Message = "Current password is incorrect!" });
                 }
 
-                IdentityResult result = await _userManager.ResetPasswordAsync(loggedInUser, resetToken, model.NewPassword);
+                IdentityResult result = await _userManager.ResetPasswordAsync(loggedInUser, await resetToken, model.NewPassword);
 
                 if (!result.Succeeded)
                 {
@@ -549,7 +549,7 @@ namespace Predictly_Api.Controllers
         /// <response code="403">Forbidden</response>
         /// <response code="409">User details conflict</response>
         /// <response code="500">Internal server error</response>
-        //[Authorize(Roles = "Admin, Staff")]
+        [Authorize(Roles = "Admin, Staff")]
         [HttpPost]
         [Route("force-onboard")]
         public async Task<ActionResult<StaffViewModel>> NewUser([FromBody] NewUserViewModel model)
@@ -558,8 +558,8 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var accessToken = await HttpContext.GetTokenAsync("access_token");
-                    var JWTtoken = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var accessToken = HttpContext.GetTokenAsync("access_token");
+                    var JWTtoken = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                     var loggedInUserId = JWTtoken.Claims.First(claim => claim.Type == "nameid").Value;
                     var loggedInUser  = await _userManager.FindByIdAsync(loggedInUserId);
 
@@ -615,7 +615,7 @@ namespace Predictly_Api.Controllers
                         }
                     }
 
-                    var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+                    var token = _userManager.GeneratePasswordResetTokenAsync(user);
                     await transaction.CommitAsync();
 
                     var userResponse = new StaffViewModel
@@ -632,7 +632,7 @@ namespace Predictly_Api.Controllers
                     };
 
                     _logger.LogInformation(string.Format("{0}, new user onborded to username: {1}", loggedInUser.UserName, user.UserName));
-                    SendEmail("newUser", null, user, token);
+                    SendEmail("newUser", null, user, await token);
                     return Ok(userResponse);
                 }
                 catch (Exception ex)

@@ -30,12 +30,12 @@ namespace Predictly_Api.Controllers
             try
             {
 
-                var schools = await _context.School.Select(x => new { x.Id, x.Name }).ToListAsync();
+                var schools = _context.School.Select(x => new { x.Id, x.Name }).ToListAsync();
                 if (schools == null)
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "Schools not found!" });
                 }
-                return Ok(schools);
+                return Ok(await schools);
             }
             catch (Exception)
             {
