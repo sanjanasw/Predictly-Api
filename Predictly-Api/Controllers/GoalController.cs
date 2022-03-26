@@ -45,8 +45,8 @@ namespace Predictly_Api.Controllers
             try
             {
 
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -55,12 +55,12 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
                 }
 
-                var userSubjects = await _context.StudyData.Where(x => x.UserId == loggedInUserId).ToListAsync();
-                var userGoals = await _context.Goals.Where(x => x.UserId == loggedInUserId).ToListAsync();
-                var subjects = await _context.Subjects.ToListAsync();
+                var userSubjects = _context.StudyData.Where(x => x.UserId == loggedInUserId).ToListAsync();
+                var userGoals = _context.Goals.Where(x => x.UserId == loggedInUserId).ToList();
+                var subjects = _context.Subjects.ToList();
                 var output = new List<GoalViewModel>();
 
-                foreach (var usersubject in userSubjects)
+                foreach (var usersubject in await userSubjects)
                 {
                     var userGoal = userGoals.Where(x => x.SubjectId == usersubject.SubjectId).FirstOrDefault();
                     output.Add(new GoalViewModel
@@ -101,8 +101,8 @@ namespace Predictly_Api.Controllers
             try
             {
 
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);

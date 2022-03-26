@@ -1,12 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Predictly_Api.Enums;
 using Predictly_Api.Models;
-using Predictly_Api.ViewModels.Dashboard;
 using Predictly_Api.ViewModels.SchoolDashboard;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Predictly_Api.Services
 {

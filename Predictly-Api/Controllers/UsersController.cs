@@ -46,8 +46,8 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -90,8 +90,8 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInId);
@@ -135,8 +135,8 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -145,7 +145,7 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
 
-                var currentStatus = await _context.StudyData.Where(x => x.UserId == loggedInUserId).Select(x => new CurrentStatusViewModel
+                var currentStatus = _context.StudyData.Where(x => x.UserId == loggedInUserId).Select(x => new CurrentStatusViewModel
                 {
                     Id = x.Id,
                     SubjectId = x.SubjectId,
@@ -155,7 +155,7 @@ namespace Predictly_Api.Controllers
                 }).ToListAsync();
 
                 var subjectsList = await _context.Subjects.ToListAsync();
-                foreach (var item in currentStatus)
+                foreach (var item in await currentStatus)
                 {
                     var subjectInfo = subjectsList.Where(x => x.Id == item.SubjectId).Select(y => new {y.Name , y.BucketType}).FirstOrDefault();
                     item.Subject = subjectInfo.Name;
@@ -181,8 +181,8 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -219,8 +219,8 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -315,8 +315,8 @@ namespace Predictly_Api.Controllers
         public async Task<ActionResult> PutUser(string id, UpdateUserViewModel model)
         {
 
-            var accessToken = await HttpContext.GetTokenAsync("access_token");
-            var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+            var accessToken = HttpContext.GetTokenAsync("access_token");
+            var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
             var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
             var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -403,8 +403,8 @@ namespace Predictly_Api.Controllers
 
             try
             {
-                var accessToken = await HttpContext.GetTokenAsync("access_token");
-                var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                var accessToken = HttpContext.GetTokenAsync("access_token");
+                var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -479,10 +479,10 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var subjectInfo = await _context.Subjects.Where(x => x.Id == model.SubjectId).Select(x => new { x.BucketType, x.Name }).FirstOrDefaultAsync();
+                    var subjectInfo = _context.Subjects.Where(x => x.Id == model.SubjectId).Select(x => new { x.BucketType, x.Name }).FirstOrDefault();
 
-                    var accessToken = await HttpContext.GetTokenAsync("access_token");
-                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var accessToken = HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                     var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                     var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -575,8 +575,8 @@ namespace Predictly_Api.Controllers
                         return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
                     }
 
-                    var accessToken = await HttpContext.GetTokenAsync("access_token");
-                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var accessToken = HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                     var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                     var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
@@ -624,8 +624,8 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-                    var accessToken = await HttpContext.GetTokenAsync("access_token");
-                    var token = new JwtSecurityTokenHandler().ReadJwtToken(accessToken) as JwtSecurityToken;
+                    var accessToken = HttpContext.GetTokenAsync("access_token");
+                    var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                     var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
 
                     var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);

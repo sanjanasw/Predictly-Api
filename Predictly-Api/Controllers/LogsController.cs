@@ -34,7 +34,7 @@ namespace Predictly_Api.Controllers
         [HttpGet("information")]
         public async Task<ActionResult<LogViewModel>> GetInformations()
         {
-            var logs = await _context.Logs.Where(x => x.Level == "Information").OrderByDescending(x => x.TimeStamp).
+            var logs = _context.Logs.Where(x => x.Level == "Information").OrderByDescending(x => x.TimeStamp).
                 Select(x => new LogViewModel
                 {
                     Message = x.Message,
@@ -42,7 +42,7 @@ namespace Predictly_Api.Controllers
                     TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
                 }).ToListAsync();
 
-            return Ok(logs);
+            return Ok(await logs);
         }
 
         /// <summary>
@@ -53,14 +53,14 @@ namespace Predictly_Api.Controllers
         [HttpGet("warning")]
         public async Task<ActionResult<LogViewModel>> GetWarnings()
         {
-            var logs = await _context.Logs.Where(x => x.Level == "Warning").OrderByDescending(x => x.TimeStamp).
+            var logs = _context.Logs.Where(x => x.Level == "Warning").OrderByDescending(x => x.TimeStamp).
                 Select(x => new LogViewModel
                 {
                     Message = x.Message,
                     Exception = x.Exception,
                     TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
                 }).ToListAsync();
-            return Ok(logs);
+            return Ok(await logs);
         }
 
         /// <summary>
@@ -71,7 +71,7 @@ namespace Predictly_Api.Controllers
         [HttpGet("error")]
         public async Task<ActionResult<LogViewModel>> GetErrors()
         {
-            var logs = await _context.Logs.Where(x => x.Level == "Error").OrderByDescending(x => x.TimeStamp).
+            var logs = _context.Logs.Where(x => x.Level == "Error").OrderByDescending(x => x.TimeStamp).
                 Select(x => new LogViewModel
                 {
                     Message = x.Message,
@@ -79,7 +79,7 @@ namespace Predictly_Api.Controllers
                     TimeStamp = x.TimeStamp.ToString("HH:mm:ss dd/MM/yyyy"),
                 }).ToListAsync();
 
-            return Ok(logs);
+            return Ok(await logs);
         }
     }
 }
