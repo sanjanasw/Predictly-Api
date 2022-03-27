@@ -26,7 +26,7 @@ namespace Predictly_Api.Controllers
         /// <response code="200">Returns subjects list</response>
         /// <response code="404">User not found</response>
         [HttpGet]
-        public async Task<ActionResult<SubjectViewModel>> GetSchools()
+        public ActionResult<SubjectViewModel> GetSchools()
         {
             try
             {

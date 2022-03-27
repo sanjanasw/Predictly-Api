@@ -438,7 +438,7 @@ namespace Predictly_Api.Controllers
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation(string.Format("{0} is deleted {2}'s account.", loggedInUser.UserName, user.UserName));
+                    _logger.LogInformation(string.Format("{0} is deleted {1}'s account.", loggedInUser.UserName, user.UserName));
                     return Ok(new ResponseModel { Status = "Success", Message = "User delete successfully!" });
                 }
                 else
@@ -621,7 +621,7 @@ namespace Predictly_Api.Controllers
         public async Task<ActionResult> DeleteStudyData(int id)
         {
             using (var transaction = await _context.Database.BeginTransactionAsync())
-            {
+           {
                 try
                 {
                     var accessToken = HttpContext.GetTokenAsync("access_token");

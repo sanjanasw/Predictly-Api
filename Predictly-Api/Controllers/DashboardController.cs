@@ -12,12 +12,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Predictly_Api.Models;
+using Predictly_Api.Services;
 using Predictly_Api.ViewModels.Dashboard;
 
 namespace Predictly_Api.Controllers
 {
     [Authorize]
-    [Route("dashboard")]
+    [Route("student-dashboard")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]
@@ -25,13 +26,15 @@ namespace Predictly_Api.Controllers
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IPredictionService _predictionService;
         private readonly ILogger<DashboardController> _logger;
 
-        public DashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<DashboardController> logger)
+        public DashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<DashboardController> logger, IPredictionService predictionService)
         {
             _userManager = userManager;
             _context = context;
             _logger = logger;
+            _predictionService = predictionService;
         }
 
         /// <summary>
@@ -39,7 +42,7 @@ namespace Predictly_Api.Controllers
         /// </summary>
         /// <response code="200">Returns dashboard data</response>
         /// <response code="404">User not found</response>
-        [HttpGet("student")]
+        [HttpGet]
         public async Task<ActionResult<StudentDashboardViewModel>> GetStudentDashboard()
         {
             try
@@ -56,32 +59,11 @@ namespace Predictly_Api.Controllers
 
                 var goals =  _context.Goals.Where(x => x.UserId == loggedInUserId).ToList();
                 var subjects =  _context.Subjects.ToList();
-                var preditedReault = _context.PredictedResults.Where(x => x.UserId == loggedInUserId).ToListAsync();
-                var dashboardData = new StudentDashboardViewModel();
-                var predictedResults = new List<PredictedResultViewModel>();
-                foreach(var item in await preditedReault)
+                var predictedResult = _context.PredictedResults.Where(x => x.UserId == loggedInUserId).ToList();
+                var dashboardData = new StudentDashboardViewModel
                 {
-                    var subjectGoal = goals.Where(x => x.SubjectId == item.SubjectId).FirstOrDefault();
-                    string goal = null;
-                    if(subjectGoal != null)
-                    {
-                        goal = subjectGoal.Goal.ToString();
-                    }
-                    predictedResults.Add(new PredictedResultViewModel
-                    {
-                        Subject = subjects.Where(x => x.Id == item.SubjectId).Select(x => x.Name).FirstOrDefault(),
-                        Goal = goal,
-                        Result = new ResultViewModel
-                        {
-                            A = item.A,
-                            B = item.B,
-                            C = item.C,
-                            S = item.S,
-                            W = item.W,
-                        }
-                    });
-                }
-                dashboardData.PredictedResult = predictedResults;
+                    PredictedResult = _predictionService.GetStudentsOwnPredictions(predictedResult, subjects, goals)
+                };
 
                 return Ok(dashboardData);
             }

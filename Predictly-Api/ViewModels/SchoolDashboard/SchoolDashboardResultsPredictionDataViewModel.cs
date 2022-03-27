@@ -1,8 +1,8 @@
 ﻿namespace Predictly_Api.ViewModels.SchoolDashboard
 {
-    public class SchoolDashboardResultsPredictionData
+    public class SchoolDashboardResultsPredictionDataViewModel
     {
-        public int SubjectId { get; set; }
+        public string Subject { get; set; }
         public int A { get; set; }
         public int B { get; set; }
         public int C { get; set; }
