@@ -4,7 +4,7 @@ using Predictly_Api.Services;
 using Predictly_Api.ViewModels.Dashboard;
 using Predictly_Api.ViewModels.SchoolDashboard;
 using System.Collections.Generic;
-using System.Linq;
+using System.Text.Json;
 using Xunit;
 
 namespace Predictly_Test
@@ -28,7 +28,7 @@ namespace Predictly_Test
             {
                 Id = 2,
                 UserId = "cc014c5c-2bd4-4c26-a1f6-75111ccace1b",
-                SubjectId = 1,
+                SubjectId = 2,
                 A = 10,
                 B = 75,
                 C = 8,
@@ -37,32 +37,7 @@ namespace Predictly_Test
             },
         };
 
-        [Fact]
-        public void GetSchoolStudentsPredictionsTest()
-        {
-            var dashboardPredictionData = new List<SchoolDashboardResultsPredictionDataViewModel>()
-            {
-                new SchoolDashboardResultsPredictionDataViewModel {
-                    SubjectId = 1,
-                    A = 1,
-                    B = 1,
-                    C = 0,
-                    S = 0,
-                    W = 0,
-                    TotalCount = 2,
-                }
-             };
-
-            PredictionService predictionService = new();
-            var result = predictionService.GetSchoolStudentsPredictions(resultInput);
-            Assert.Equal(result.First().TotalCount, dashboardPredictionData.First().TotalCount);
-
-        }
-
-        [Fact]
-        public void GetStudentsOwnPredictionsTest()
-        {
-            var subjects = new List<SubjectModel>()
+        public List<SubjectModel> subjects = new List<SubjectModel>()
            {
                new SubjectModel()
                {
@@ -76,6 +51,40 @@ namespace Predictly_Test
                },
            };
 
+        [Fact]
+        public void GetSchoolStudentsPredictionsTest()
+        {
+            var dashboardPredictionData = new List<SchoolDashboardResultsPredictionDataViewModel>()
+            {
+                new SchoolDashboardResultsPredictionDataViewModel {
+                    Subject = "Buddhism",
+                    A = 1,
+                    B = 0,
+                    C = 0,
+                    S = 0,
+                    W = 0,
+                    TotalCount = 1,
+                },
+                 new SchoolDashboardResultsPredictionDataViewModel {
+                    Subject = "English",
+                    A = 0,
+                    B = 1,
+                    C = 0,
+                    S = 0,
+                    W = 0,
+                    TotalCount = 1,
+                }
+             };
+
+            PredictionService predictionService = new();
+            var result = predictionService.GetSchoolStudentsPredictions(resultInput, subjects);
+            Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(dashboardPredictionData));
+
+        }
+
+        [Fact]
+        public void GetStudentsOwnPredictionsTest()
+        {
             var goals = new List<GoalModel>()
            {
                new GoalModel()
@@ -126,7 +135,7 @@ namespace Predictly_Test
 
             PredictionService predictionService = new();
             var result = predictionService.GetStudentsOwnPredictions(resultInput, subjects, goals);
-            Assert.Equal(result.First().Subject, studentOwnPredictionData.First().Subject);
+            Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(studentOwnPredictionData));
 
         }
     }
