@@ -38,7 +38,7 @@ namespace Predictly_Test
         };
 
         public List<SubjectModel> subjects = new List<SubjectModel>()
-           {
+        {
                new SubjectModel()
                {
                    Id= 1,
@@ -49,7 +49,7 @@ namespace Predictly_Test
                    Id= 2,
                    Name = "English"
                },
-           };
+        };
 
         [Fact]
         public void GetSchoolStudentsPredictionsTest()
@@ -137,6 +137,53 @@ namespace Predictly_Test
             var result = predictionService.GetStudentsOwnPredictions(resultInput, subjects, goals);
             Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(studentOwnPredictionData));
 
+        }
+
+        [Fact]
+        public void GetClassStatusDistribution()
+        {
+            var classData = new List<SubjectClassStatusViewModel>()
+            {
+                new SubjectClassStatusViewModel()
+                {
+                    SubjectId = 1,
+                    ClassStatus = true
+                },
+                new SubjectClassStatusViewModel()
+                {
+                    SubjectId = 2,
+                    ClassStatus = true
+                },
+                new SubjectClassStatusViewModel()
+                {
+                    SubjectId = 2,
+                    ClassStatus = true
+                },
+                new SubjectClassStatusViewModel()
+                {
+                    SubjectId = 2,
+                    ClassStatus = true
+                },
+
+            };
+
+            var classDistribution = new List<ClassStatusViewModel>()
+            {
+                new ClassStatusViewModel()
+                {
+                    Count = 1,
+                    Subject = "Buddhism"
+                },
+                new ClassStatusViewModel()
+                {
+                    Count = 3,
+                    Subject = "English"
+                }
+            };
+
+            PredictionService predictionService = new();
+            var result = predictionService.GetClassStatus(classData, subjects);
+            Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(classDistribution));
         }
     }
 }

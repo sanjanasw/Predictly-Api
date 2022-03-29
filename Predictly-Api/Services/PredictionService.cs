@@ -11,10 +11,26 @@ namespace Predictly_Api.Services
     {
         public List<PredictedResultViewModel> GetStudentsOwnPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects, List<GoalModel> goals);
         public List<SchoolDashboardResultsPredictionDataViewModel> GetSchoolStudentsPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects);
+        public List<ClassStatusViewModel> GetClassStatus(List<SubjectClassStatusViewModel> studyData, List<SubjectModel> subjects);
     }
 
     public class PredictionService : IPredictionService
     {
+        public List<ClassStatusViewModel> GetClassStatus(List<SubjectClassStatusViewModel> studyData, List<SubjectModel> subjects)
+        {
+            var output = new List<ClassStatusViewModel>();
+            var subjectClass = studyData.Where(x => x.ClassStatus == true).GroupBy(x => x.SubjectId).Select(y => new ClassStatusViewModel { Subject = y.Key.ToString(), Count = y.Count() }).ToList();
+            foreach (var item in subjects)
+            {
+                output.Add(new ClassStatusViewModel
+                {
+                    Subject = item.Name,
+                    Count = subjectClass.Where(x => x.Subject == item.Id.ToString()).Select(x => x.Count).FirstOrDefault(),
+                });
+            }
+            return output;
+        }
+
         public List<SchoolDashboardResultsPredictionDataViewModel> GetSchoolStudentsPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects)
         {
 

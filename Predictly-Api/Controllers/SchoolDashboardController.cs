@@ -49,20 +49,18 @@ namespace Predictly_Api.Controllers
             var subjects = _context.Subjects.ToList();
             var students = _context.Users.Where(x => x.SchoolId == loggedInUser.SchoolId && x.OLYear > 0).ToList();
             var results = _context.PredictedResults.Where(x => students.Select(x => x.Id).Contains(x.UserId)).ToList();
-            var prediction = _predictionService.GetSchoolStudentsPredictions(results, subjects);
             var studyData = _context.StudyData.Where(x => students.Select(x => x.Id).Contains(x.UserId))
                 .Select(x => new SubjectClassStatusViewModel { SubjectId = x.SubjectId, ClassStatus = x.ClassStatus}).ToList();
 
-            var subjectClass = studyData.GroupBy(x => x.SubjectId).Select(y => new { y.Key, count = y.Count() }).ToList();
-
             var output = new SchoolDashboardViewModel()
             {
-                ResultPrediction = prediction,
+                ResultPrediction = _predictionService.GetSchoolStudentsPredictions(results, subjects),
                 GenderDistribution = new SchoolGenderDistributionViewModel()
                 {
                     Male = students.Where(x => x.Gender == Genders.Male).Count(),
                     Female = students.Where(x => x.Gender == Genders.Female).Count(),
-                }
+                },
+                ClassStatus = _predictionService.GetClassStatus(studyData,subjects),
 
             };
             return Ok(output);
