@@ -171,13 +171,13 @@ namespace Predictly_Test
             {
                 new ClassStatusViewModel()
                 {
-                    Count = 1,
-                    Subject = "Buddhism"
+                    Value = 1,
+                    Name = "Buddhism"
                 },
                 new ClassStatusViewModel()
                 {
-                    Count = 3,
-                    Subject = "English"
+                    Value = 3,
+                    Name = "English"
                 }
             };
 

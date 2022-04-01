@@ -7,6 +7,7 @@ using Predictly_Api.Enums;
 using Predictly_Api.Models;
 using Predictly_Api.Services;
 using Predictly_Api.ViewModels.SchoolDashboard;
+using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Mime;
@@ -55,10 +56,16 @@ namespace Predictly_Api.Controllers
             var output = new SchoolDashboardViewModel()
             {
                 ResultPrediction = _predictionService.GetSchoolStudentsPredictions(results, subjects),
-                GenderDistribution = new SchoolGenderDistributionViewModel()
+                GenderDistribution = new List<SchoolGenderDistributionViewModel>()
                 {
-                    Male = students.Where(x => x.Gender == Genders.Male).Count(),
-                    Female = students.Where(x => x.Gender == Genders.Female).Count(),
+                  new SchoolGenderDistributionViewModel(){
+                      Name = "Male",
+                      Value = students.Where(x => x.Gender == Genders.Male).Count(),
+                  },
+                  new SchoolGenderDistributionViewModel(){
+                      Name = "Female",
+                      Value = students.Where(x => x.Gender == Genders.Female).Count(),
+                  }
                 },
                 ClassStatus = _predictionService.GetClassStatus(studyData,subjects),
 

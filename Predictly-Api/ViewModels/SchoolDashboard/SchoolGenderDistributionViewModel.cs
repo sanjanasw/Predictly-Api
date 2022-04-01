@@ -2,7 +2,7 @@
 {
     public class SchoolGenderDistributionViewModel
     {
-        public int Male { get; set; }
-        public int Female { get; set; }
+        public string Name { get; set; }
+        public int Value { get; set; }
     }
 }
