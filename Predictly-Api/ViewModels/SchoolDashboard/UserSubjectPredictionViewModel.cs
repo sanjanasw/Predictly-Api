@@ -2,7 +2,7 @@
 
 namespace Predictly_Api.ViewModels.SchoolDashboard
 {
-    public class UserSubjectPrediction
+    public class UserSubjectPredictionViewModel
     {
         public string UserId { get; set; }
         public int SubjectId { get; set; }

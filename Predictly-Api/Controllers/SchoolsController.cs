@@ -29,7 +29,6 @@ namespace Predictly_Api.Controllers
         {
             try
             {
-
                 var schools = _context.School.Select(x => new { x.Id, x.Name }).ToListAsync();
                 if (schools == null)
                 {

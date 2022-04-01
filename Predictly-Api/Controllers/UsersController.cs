@@ -15,6 +15,7 @@ using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
 
 using Predictly_Api.Enums;
+using System.Security.Claims;
 
 namespace Predictly_Api.Controllers
 {
@@ -93,6 +94,7 @@ namespace Predictly_Api.Controllers
                 var accessToken = HttpContext.GetTokenAsync("access_token");
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInId = token.Claims.First(claim => claim.Type == "nameid").Value;
+                var role = token.Claims.First(claim => claim.Type == ClaimTypes.Role).Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInId);
                 if (loggedInUser == null)
@@ -102,18 +104,38 @@ namespace Predictly_Api.Controllers
 
                 var usersList = await _userManager.Users.ToListAsync();
                 var users = new List<StudentViewModel>();
-                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == loggedInUser.SchoolId).Select(c => new StudentViewModel
+
+                if (role == UserRoles.Admin.ToString())
                 {
-                    Id = c.Id,
-                    Username = c.UserName,
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
-                    Gender = c.Gender,
-                    Email = c.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                    OLYear = c.OLYear,
-                    SchoolId = c.SchoolId,
-                }).Where(c => c.Role.ToLower() == "").ToList();
+                    users = usersList.Where(u => !u.DeleteStatus).Select(c => new StudentViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                        OLYear = c.OLYear,
+                        SchoolId = c.SchoolId,
+                    }).Where(c => c.Role.ToLower() == "").ToList();
+                }
+                else
+                {
+
+                    users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == loggedInUser.SchoolId).Select(c => new StudentViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                        OLYear = c.OLYear,
+                        SchoolId = c.SchoolId,
+                    }).Where(c => c.Role.ToLower() == "").ToList();
+                }
 
                 return Ok(users);
             }
@@ -222,6 +244,7 @@ namespace Predictly_Api.Controllers
                 var accessToken = HttpContext.GetTokenAsync("access_token");
                 var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
                 var loggedInUserId = token.Claims.First(claim => claim.Type == "nameid").Value;
+                var role = token.Claims.First(claim => claim.Type == ClaimTypes.Role).Value;
 
                 var loggedInUser = await _userManager.FindByIdAsync(loggedInUserId);
                 if (loggedInUser == null)
@@ -231,18 +254,37 @@ namespace Predictly_Api.Controllers
 
                 var usersList = await _userManager.Users.ToListAsync();
                 var users = new List<StaffViewModel>();
-                users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == loggedInUser.SchoolId).Select(c => new StaffViewModel
+                if (role == UserRoles.Admin.ToString())
                 {
-                    Id = c.Id,
-                    Username = c.UserName,
-                    FirstName = c.FirstName,
-                    LastName = c.LastName,
-                    Gender = c.Gender,
-                    Email = c.Email,
-                    Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
-                    isActive = c.EmailConfirmed,
-                    SchoolId = c.SchoolId,
-                }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
+                    users = usersList.Where(u => !u.DeleteStatus).Select(c => new StaffViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                        isActive = c.EmailConfirmed,
+                        SchoolId = c.SchoolId,
+                    }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
+                    return Ok(users);
+                }
+                else
+                {
+                    users = usersList.Where(u => !u.DeleteStatus && u.SchoolId == loggedInUser.SchoolId).Select(c => new StaffViewModel
+                    {
+                        Id = c.Id,
+                        Username = c.UserName,
+                        FirstName = c.FirstName,
+                        LastName = c.LastName,
+                        Gender = c.Gender,
+                        Email = c.Email,
+                        Role = string.Join(",", _userManager.GetRolesAsync(c).Result.ToArray()),
+                        isActive = c.EmailConfirmed,
+                        SchoolId = c.SchoolId,
+                    }).Where(c => c.Role == UserRoles.Staff.ToString()).ToList();
+                }
                 return Ok(users);
             }
             catch (Exception ex)
@@ -438,7 +480,7 @@ namespace Predictly_Api.Controllers
                 var result = await _userManager.UpdateAsync(user);
                 if (result.Succeeded)
                 {
-                    _logger.LogInformation(string.Format("{0} is deleted {2}'s account.", loggedInUser.UserName, user.UserName));
+                    _logger.LogInformation(string.Format("{0} is deleted {1}'s account.", loggedInUser.UserName, user.UserName));
                     return Ok(new ResponseModel { Status = "Success", Message = "User delete successfully!" });
                 }
                 else
@@ -621,7 +663,7 @@ namespace Predictly_Api.Controllers
         public async Task<ActionResult> DeleteStudyData(int id)
         {
             using (var transaction = await _context.Database.BeginTransactionAsync())
-            {
+           {
                 try
                 {
                     var accessToken = HttpContext.GetTokenAsync("access_token");

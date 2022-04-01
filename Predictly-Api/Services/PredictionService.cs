@@ -2,21 +2,39 @@
 using System.Linq;
 using Predictly_Api.Enums;
 using Predictly_Api.Models;
+using Predictly_Api.ViewModels.Dashboard;
 using Predictly_Api.ViewModels.SchoolDashboard;
 
 namespace Predictly_Api.Services
 {
     public interface IPredictionService
     {
-        public List<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results);
+        public List<PredictedResultViewModel> GetStudentsOwnPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects, List<GoalModel> goals);
+        public List<SchoolDashboardResultsPredictionDataViewModel> GetSchoolStudentsPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects);
+        public List<ClassStatusViewModel> GetClassStatus(List<SubjectClassStatusViewModel> studyData, List<SubjectModel> subjects);
     }
 
     public class PredictionService : IPredictionService
     {
-        public List<SchoolDashboardResultsPredictionData> GetSchoolStudentsPredictions(List<PredictedResultModel> results)
+        public List<ClassStatusViewModel> GetClassStatus(List<SubjectClassStatusViewModel> studyData, List<SubjectModel> subjects)
+        {
+            var output = new List<ClassStatusViewModel>();
+            var subjectClass = studyData.Where(x => x.ClassStatus == true).GroupBy(x => x.SubjectId).Select(y => new ClassStatusViewModel { Name = y.Key.ToString(), Value = y.Count() }).ToList();
+            foreach (var item in subjectClass)
+            {
+                output.Add(new ClassStatusViewModel
+                {
+                    Name = subjects.Where(x => x.Id.ToString() == item.Name).Select(x => x.Name).FirstOrDefault(),
+                    Value = item.Value,
+                });
+            }
+            return output;
+        }
+
+        public List<SchoolDashboardResultsPredictionDataViewModel> GetSchoolStudentsPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects)
         {
 
-            var predictedResults = new List<UserSubjectPrediction>();
+            var predictedResults = new List<UserSubjectPredictionViewModel>();
             foreach (var result in results)
             {
                 IDictionary<double, Results> predictions = new Dictionary<double, Results>();
@@ -26,7 +44,7 @@ namespace Predictly_Api.Services
                 predictions.Add(new KeyValuePair<double, Results>((double)result.S, Results.S));
                 predictions.Add(new KeyValuePair<double, Results>((double)result.W, Results.W));
                 var max = predictions.OrderByDescending(x => x.Key).First();
-                predictedResults.Add(new UserSubjectPrediction
+                predictedResults.Add(new UserSubjectPredictionViewModel
                 {
                     PredictedResult = max.Value,
                     SubjectId = result.SubjectId,
@@ -35,7 +53,7 @@ namespace Predictly_Api.Services
             }
 
             var predictionCounts = predictedResults.GroupBy(x => x.SubjectId).ToList();
-            var dashboardPredictionData = new List<SchoolDashboardResultsPredictionData>();
+            var dashboardPredictionData = new List<SchoolDashboardResultsPredictionDataViewModel>();
             foreach (var prediction in predictionCounts)
             {
                 var predictionList = prediction.ToList();
@@ -61,20 +79,47 @@ namespace Predictly_Api.Services
                             break;
                     }
                 }
-                dashboardPredictionData.Add(new SchoolDashboardResultsPredictionData
+                dashboardPredictionData.Add(new SchoolDashboardResultsPredictionDataViewModel
                 {
-                    SubjectId = prediction.Key,
+                    Subject = subjects.Where(x => x.Id == prediction.Key).Select(x => x.Name).FirstOrDefault(),
                     A = A,
                     B = B,
                     C = C,
                     S = S,
                     W = W,
-                    TotalCount = predictionList.Count(),
+                    TotalCount = predictionList.Count,
                 });
             }
 
             return dashboardPredictionData;
         }
 
+        public List<PredictedResultViewModel> GetStudentsOwnPredictions(List<PredictedResultModel> results, List<SubjectModel>subjects, List<GoalModel> goals)
+        {
+            var predictedResults = new List<PredictedResultViewModel>();
+            foreach (var item in results)
+            {
+                var subjectGoal = goals.Where(x => x.SubjectId == item.SubjectId).FirstOrDefault();
+                string goal = null;
+                if (subjectGoal != null)
+                {
+                    goal = subjectGoal.Goal.ToString();
+                }
+                predictedResults.Add(new PredictedResultViewModel
+                {
+                    Subject = subjects.Where(x => x.Id == item.SubjectId).Select(x => x.Name).FirstOrDefault(),
+                    Goal = goal,
+                    Result = new ResultViewModel
+                    {
+                        A = item.A,
+                        B = item.B,
+                        C = item.C,
+                        S = item.S,
+                        W = item.W,
+                    }
+                });
+            }
+            return predictedResults;
+        }
     }
 }

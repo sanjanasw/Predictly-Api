@@ -273,6 +273,13 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
+
+                    if (_context.School.First(x => x.Name.ToLower().Equals(model.SchoolInfo.Name.ToLower())) != null)
+                    {
+                        _logger.LogWarning(string.Format("{0} is tried to add {1} school again.", model.UserInfo.Email, model.SchoolInfo.Name));
+                        return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "School is already exists!" });
+                    }
+
                     var userExists =  await _userManager.FindByNameAsync(model.UserInfo.Username);
                     var userEmailExists = await _userManager.FindByEmailAsync(model.UserInfo.Email);
                     if ( userExists != null)
