@@ -273,8 +273,7 @@ namespace Predictly_Api.Controllers
             {
                 try
                 {
-
-                    if (_context.School.First(x => x.Name.ToLower().Equals(model.SchoolInfo.Name.ToLower())) != null)
+                    if (_context.School.Any(x => x.Name.ToLower().Equals(model.SchoolInfo.Name.ToLower())))
                     {
                         _logger.LogWarning(string.Format("{0} is tried to add {1} school again.", model.UserInfo.Email, model.SchoolInfo.Name));
                         return StatusCode(StatusCodes.Status409Conflict, new ResponseModel { Status = "Error", Message = "School is already exists!" });
