@@ -76,6 +76,7 @@ namespace Predictly_Api
 
             // Configure DI for application services
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<IPredictionAnalizingService, PredictionAnalizingService>();
             services.AddScoped<IPredictionService, PredictionService>();
 
             // Swagger

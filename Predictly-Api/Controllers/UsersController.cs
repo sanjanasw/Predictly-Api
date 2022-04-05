@@ -13,13 +13,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
-
 using Predictly_Api.Enums;
 using System.Security.Claims;
+using Predictly_Api.Services;
+using Predictly_Api.ViewModels.Dashboard;
 
 namespace Predictly_Api.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("user")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
@@ -30,11 +31,15 @@ namespace Predictly_Api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UsersController> _logger;
 
-        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger)
+        //Test
+        private readonly IPredictionService _predicyionService;
+
+        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger, IPredictionService predictionService)
         {
             _userManager = userManager;
             _context = context;
             _logger = logger;
+            _predicyionService = predictionService;
         }
 
         /// <summary>
@@ -714,6 +719,12 @@ namespace Predictly_Api.Controllers
                     throw;
                 }
             }
+        }
+
+        [HttpPost("Predict")]
+        public ResultViewModel Predict(Buddhism.ModelInput model)
+        {
+            return _predicyionService.GetPrediction(model);
         }
     }
 }
