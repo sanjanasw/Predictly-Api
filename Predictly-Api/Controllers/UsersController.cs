@@ -13,13 +13,14 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
-
 using Predictly_Api.Enums;
 using System.Security.Claims;
+using Predictly_Api.Services;
+using Predictly_Api.ViewModels.Dashboard;
 
 namespace Predictly_Api.Controllers
 {
-    [Authorize]
+    //[Authorize]
     [Route("user")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
@@ -29,12 +30,14 @@ namespace Predictly_Api.Controllers
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UsersController> _logger;
+        private readonly IPredictionService _predictionService;
 
-        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger)
+        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger, IPredictionService predictionService)
         {
             _userManager = userManager;
             _context = context;
             _logger = logger;
+            _predictionService = predictionService;
         }
 
         /// <summary>
@@ -638,6 +641,31 @@ namespace Predictly_Api.Controllers
                     };
 
                     _context.Entry(updateData).State = EntityState.Modified;
+                    var prediction = _predictionService.GetPrediction(new PredictionModelInput
+                    {
+                        Average_Previous_Marks = (float)model.AvgMarks,
+                        Class_Status = model.ClassStatus,
+                        Study_Hours = (float)model.Commitment,
+                        Father_s_Highest_Education_Level = (float)loggedInUser.FathersEduLevel,
+                        Mother_s_Highest_Education_Level = (float)loggedInUser.MothersEduLevel
+                    }, model.SubjectId);
+                    if(prediction != null)
+                    {
+                        var prevPrediction = _context.PredictedResults.Where(x => x.SubjectId ==model.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
+                        if (prevPrediction != null)
+                            _context.PredictedResults.Remove(prevPrediction);
+                        _context.PredictedResults.Add(new PredictedResultModel
+                        {
+                            UserId = loggedInUserId,
+                            SubjectId = model.SubjectId,
+                            UpdatedOn = DateTime.Now,
+                            A = prediction.A,
+                            B = prediction.B,
+                            C = prediction.C,
+                            S = prediction.S,
+                            W = prediction.W,
+                        });
+                    }
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
                     _logger.LogInformation(string.Format("{0} is updated study data.", loggedInUser.UserName));
@@ -700,6 +728,10 @@ namespace Predictly_Api.Controllers
                     if (goal != null)
                         _context.Goals.Remove(goal);
 
+                    var predictedData = _context.PredictedResults.Where(x => x.SubjectId == studyData.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
+                    if(predictedData != null)
+                        _context.PredictedResults.Remove(predictedData);
+
                     await _userManager.UpdateAsync(loggedInUser);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
@@ -713,6 +745,20 @@ namespace Predictly_Api.Controllers
                     _logger.LogError(ex, "Error occcured in DELETE: user/study-data.");
                     throw;
                 }
+            }
+        }
+
+        [HttpPost("Predict")]
+        public ResultViewModel Predict(PredictionModelInput model, [FromQuery] int subjectId)
+        {
+            try
+            {
+                return _predictionService.GetPrediction(model, subjectId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Prediction Error");
+                throw ex;
             }
         }
     }

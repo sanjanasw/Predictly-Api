@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Net.Mime;
@@ -9,7 +8,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Predictly_Api.Models;
 using Predictly_Api.Services;
@@ -26,15 +24,15 @@ namespace Predictly_Api.Controllers
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
-        private readonly IPredictionService _predictionService;
+        private readonly IPredictionAnalizingService _predictionAnalizingService;
         private readonly ILogger<DashboardController> _logger;
 
-        public DashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<DashboardController> logger, IPredictionService predictionService)
+        public DashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<DashboardController> logger, IPredictionAnalizingService predictionAnalizingService)
         {
             _userManager = userManager;
             _context = context;
             _logger = logger;
-            _predictionService = predictionService;
+            _predictionAnalizingService = predictionAnalizingService;
         }
 
         /// <summary>
@@ -62,7 +60,7 @@ namespace Predictly_Api.Controllers
                 var predictedResult = _context.PredictedResults.Where(x => x.UserId == loggedInUserId).ToList();
                 var dashboardData = new StudentDashboardViewModel
                 {
-                    PredictedResult = _predictionService.GetStudentsOwnPredictions(predictedResult, subjects, goals)
+                    PredictedResult = _predictionAnalizingService.GetStudentsOwnPredictions(predictedResult, subjects, goals)
                 };
 
                 return Ok(dashboardData);

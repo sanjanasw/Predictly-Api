@@ -5,7 +5,7 @@ VisualStudioVersion = 17.0.31912.275
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Predictly-Api", "Predictly-Api\Predictly-Api.csproj", "{099C6637-A48D-402B-8C70-31982179AAF9}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Predictly-Test", "Predictly-Test\Predictly-Test.csproj", "{FFE5E86C-AB62-4090-8BE8-FEBDDBE74B54}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Predictly-Test", "Predictly-Test\Predictly-Test.csproj", "{FFE5E86C-AB62-4090-8BE8-FEBDDBE74B54}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

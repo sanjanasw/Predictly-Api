@@ -1,125 +1,92 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using Predictly_Api.Enums;
+﻿using Microsoft.Extensions.Logging;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.Dashboard;
-using Predictly_Api.ViewModels.SchoolDashboard;
+using System;
+using System.Collections.Generic;
 
 namespace Predictly_Api.Services
 {
     public interface IPredictionService
     {
-        public List<PredictedResultViewModel> GetStudentsOwnPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects, List<GoalModel> goals);
-        public List<SchoolDashboardResultsPredictionDataViewModel> GetSchoolStudentsPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects);
-        public List<ClassStatusViewModel> GetClassStatus(List<SubjectClassStatusViewModel> studyData, List<SubjectModel> subjects);
+        public ResultViewModel GetPrediction(PredictionModelInput model, int subjectId);
+        public ResultViewModel FormatResult(Dictionary<string, float> result);
     }
 
     public class PredictionService : IPredictionService
     {
-        public List<ClassStatusViewModel> GetClassStatus(List<SubjectClassStatusViewModel> studyData, List<SubjectModel> subjects)
+        private readonly ILogger<PredictionService> _logger;
+        public PredictionService(ILogger<PredictionService> logger)
         {
-            var output = new List<ClassStatusViewModel>();
-            var subjectClass = studyData.Where(x => x.ClassStatus == true).GroupBy(x => x.SubjectId).Select(y => new ClassStatusViewModel { Name = y.Key.ToString(), Value = y.Count() }).ToList();
-            foreach (var item in subjectClass)
+            _logger = logger;   
+        }
+        public ResultViewModel GetPrediction(PredictionModelInput model, int subjectId)
+        {
+            try
             {
-                output.Add(new ClassStatusViewModel
+                switch (subjectId)
                 {
-                    Name = subjects.Where(x => x.Id.ToString() == item.Name).Select(x => x.Name).FirstOrDefault(),
-                    Value = item.Value,
-                });
+                    case 1:
+                        return FormatResult(Buddhism.Predict(model));
+                    case 2:
+                        return FormatResult(Sinhala.Predict(model));
+                    case 3:
+                        return FormatResult(English.Predict(model));
+                    case 4:
+                        return FormatResult(History.Predict(model));
+                    case 5:
+                        return FormatResult(Science.Predict(model));
+                    case 6:
+                        return FormatResult(Mathematics.Predict(model));
+                    default:
+                        break;
+                }
+                return null;
             }
-            return output;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Prediction Error");
+                return null;
+            }
+
         }
 
-        public List<SchoolDashboardResultsPredictionDataViewModel> GetSchoolStudentsPredictions(List<PredictedResultModel> results, List<SubjectModel> subjects)
+        public ResultViewModel FormatResult(Dictionary<string, float> result)
         {
-
-            var predictedResults = new List<UserSubjectPredictionViewModel>();
-            foreach (var result in results)
+            var A = 0.0;
+            var B = 0.0;
+            var C = 0.0;
+            var S = 0.0;
+            var W = 0.0;
+            foreach (var scoreEntry in result)
             {
-                IDictionary<double, Results> predictions = new Dictionary<double, Results>();
-                predictions.Add(new KeyValuePair<double, Results>((double)result.A, Results.A));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.B, Results.B));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.C, Results.C));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.S, Results.S));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.W, Results.W));
-                var max = predictions.OrderByDescending(x => x.Key).First();
-                predictedResults.Add(new UserSubjectPredictionViewModel
+                switch (scoreEntry.Key)
                 {
-                    PredictedResult = max.Value,
-                    SubjectId = result.SubjectId,
-                    UserId = result.UserId,
-                });
-            }
-
-            var predictionCounts = predictedResults.GroupBy(x => x.SubjectId).ToList();
-            var dashboardPredictionData = new List<SchoolDashboardResultsPredictionDataViewModel>();
-            foreach (var prediction in predictionCounts)
-            {
-                var predictionList = prediction.ToList();
-                int A = 0, B = 0, C = 0, S = 0, W = 0;
-                foreach (var predictedValue in predictionList)
-                {
-                    switch (predictedValue.PredictedResult)
-                    {
-                        case Results.A:
-                            A++;
-                            break;
-                        case Results.B:
-                            B++;
-                            break;
-                        case Results.C:
-                            C++;
-                            break;
-                        case Results.S:
-                            S++;
-                            break;
-                        case Results.W:
-                            W++;
-                            break;
-                    }
+                    case "A":
+                        A = scoreEntry.Value;
+                        break;
+                    case "B":
+                        B = scoreEntry.Value;
+                        break;
+                    case "C":
+                        C = scoreEntry.Value;
+                        break;
+                    case "S":
+                        S = scoreEntry.Value;
+                        break;
+                    case "W":
+                        W = scoreEntry.Value;
+                        break;
                 }
-                dashboardPredictionData.Add(new SchoolDashboardResultsPredictionDataViewModel
-                {
-                    Subject = subjects.Where(x => x.Id == prediction.Key).Select(x => x.Name).FirstOrDefault(),
-                    A = A,
-                    B = B,
-                    C = C,
-                    S = S,
-                    W = W,
-                    TotalCount = predictionList.Count,
-                });
+                Console.WriteLine($"Area: {scoreEntry.Key} Score: {scoreEntry.Value * 100}%");
             }
-
-            return dashboardPredictionData;
-        }
-
-        public List<PredictedResultViewModel> GetStudentsOwnPredictions(List<PredictedResultModel> results, List<SubjectModel>subjects, List<GoalModel> goals)
-        {
-            var predictedResults = new List<PredictedResultViewModel>();
-            foreach (var item in results)
+            return new ResultViewModel
             {
-                var subjectGoal = goals.Where(x => x.SubjectId == item.SubjectId).FirstOrDefault();
-                string goal = null;
-                if (subjectGoal != null)
-                {
-                    goal = subjectGoal.Goal.ToString();
-                }
-                predictedResults.Add(new PredictedResultViewModel
-                {
-                    Subject = subjects.Where(x => x.Id == item.SubjectId).Select(x => x.Name).FirstOrDefault(),
-                    Goal = goal,
-                    Result = new ResultViewModel
-                    {
-                        A = item.A,
-                        B = item.B,
-                        C = item.C,
-                        S = item.S,
-                        W = item.W,
-                    }
-                });
-            }
-            return predictedResults;
+                W = Math.Round(W * 100, 2),
+                S = Math.Round(S * 100, 2),
+                A = Math.Round(A * 100, 2),
+                B = Math.Round(B * 100, 2),
+                C = Math.Round(C * 100, 2),
+            };
         }
     }
 }

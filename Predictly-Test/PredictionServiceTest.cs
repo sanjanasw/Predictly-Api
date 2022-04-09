@@ -76,7 +76,7 @@ namespace Predictly_Test
                 }
              };
 
-            PredictionService predictionService = new();
+            PredictionAnalizingService predictionService = new();
             var result = predictionService.GetSchoolStudentsPredictions(resultInput, subjects);
             Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(dashboardPredictionData));
 
@@ -133,7 +133,7 @@ namespace Predictly_Test
                 }
             };
 
-            PredictionService predictionService = new();
+            PredictionAnalizingService predictionService = new();
             var result = predictionService.GetStudentsOwnPredictions(resultInput, subjects, goals);
             Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(studentOwnPredictionData));
 
@@ -181,7 +181,7 @@ namespace Predictly_Test
                 }
             };
 
-            PredictionService predictionService = new();
+            PredictionAnalizingService predictionService = new();
             var result = predictionService.GetClassStatus(classData, subjects);
             Assert.Equal(JsonSerializer.Serialize(result), JsonSerializer.Serialize(classDistribution));
         }

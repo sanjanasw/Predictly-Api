@@ -2,7 +2,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
 using Predictly_Api.Enums;
 using Predictly_Api.Models;
 using Predictly_Api.Services;
@@ -24,14 +23,14 @@ namespace Predictly_Api.Controllers
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
-        private readonly IPredictionService _predictionService;
+        private readonly IPredictionAnalizingService _predictionAnalizingService;
 
-        public SchoolDashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, 
-            IPredictionService predictionService)
+        public SchoolDashboardController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context,
+            IPredictionAnalizingService predictionAnalizingService)
         {
             _userManager = userManager;
             _context = context;
-            _predictionService = predictionService;
+            _predictionAnalizingService = predictionAnalizingService;
 
         }
 
@@ -55,7 +54,7 @@ namespace Predictly_Api.Controllers
 
             var output = new SchoolDashboardViewModel()
             {
-                ResultPrediction = _predictionService.GetSchoolStudentsPredictions(results, subjects),
+                ResultPrediction = _predictionAnalizingService.GetSchoolStudentsPredictions(results, subjects),
                 GenderDistribution = new List<SchoolGenderDistributionViewModel>()
                 {
                   new SchoolGenderDistributionViewModel(){
@@ -67,7 +66,7 @@ namespace Predictly_Api.Controllers
                       Value = students.Where(x => x.Gender == Genders.Female).Count(),
                   }
                 },
-                ClassStatus = _predictionService.GetClassStatus(studyData,subjects),
+                ClassStatus = _predictionAnalizingService.GetClassStatus(studyData,subjects),
 
             };
             return Ok(output);

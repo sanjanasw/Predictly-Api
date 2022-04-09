@@ -1,16 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
-
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
     <UserSecretsId>aspnet-Predictly_Api-56B73840-3D93-4E74-9ECF-649683474244</UserSecretsId>
     <RootNamespace>Predictly_Api</RootNamespace>
   </PropertyGroup>
-
   <PropertyGroup>
-	  <GenerateDocumentationFile>true</GenerateDocumentationFile>
-	  <NoWarn>$(NoWarn);1591</NoWarn>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="MailKit" Version="3.1.1" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="5.0.11" />
@@ -25,6 +22,9 @@
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.Identity.Web" Version="1.1.0" />
+    <PackageReference Include="Microsoft.ML" Version="1.7.0" />
+    <PackageReference Include="Microsoft.ML.FastTree" Version="1.7.0" />
+    <PackageReference Include="Microsoft.ML.LightGbm" Version="1.7.0" />
     <PackageReference Include="Microsoft.OpenApi" Version="1.2.3" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
@@ -35,7 +35,6 @@
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.3.0" />
     <PackageReference Include="Serilog.Sinks.MSSqlServer" Version="5.7.0" />
   </ItemGroup>
-
   <ItemGroup>
     <None Remove="Serilog.AspNetCore" />
     <None Remove="Serilog.Settings.Configuration" />
@@ -45,5 +44,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Filters\" />
+	<Folder Include="PredictionModels\" />
   </ItemGroup>
 </Project>
