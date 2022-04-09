@@ -34,9 +34,10 @@ namespace Predictly_Api.Controllers
         private readonly IConfiguration _configuration;
         private readonly IEmailService _emailService;
         private readonly ILogger<AuthenticateController> _logger;
+        private readonly IPredictionService _predictionService;
 
         public AuthenticateController(UserManager<ApplicationUserModel> userManager, RoleManager<IdentityRole> roleManager, ApplicationDbContext context,
-            IConfiguration configuration, IEmailService emailService, ILogger<AuthenticateController> logger)
+            IConfiguration configuration, IEmailService emailService, ILogger<AuthenticateController> logger, IPredictionService predictionService)
         {
             _userManager = userManager;
             _roleManager = roleManager;
@@ -44,6 +45,7 @@ namespace Predictly_Api.Controllers
             _configuration = configuration;
             _emailService = emailService;
             _logger = logger;
+            _predictionService = predictionService;
         }
 
         /// <summary>
@@ -203,7 +205,7 @@ namespace Predictly_Api.Controllers
                         BSub1 = model.UserInfo.BSub1,
                         BSub2 = model.UserInfo.BSub2,
                         BSub3 = model.UserInfo.BSub3,
-                        OLYear = model.UserInfo.OLYear,
+                          OLYear = model.UserInfo.OLYear,
                         SecurityStamp = Guid.NewGuid().ToString(),
                     };
                     var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
@@ -218,6 +220,30 @@ namespace Predictly_Api.Controllers
                             ClassStatus = item.ClassStatus,
                             SubjectId = item.SubjectId
                         });
+
+                        var prediction = _predictionService.GetPrediction(new PredictionModelInput
+                        {
+                            Average_Previous_Marks = (float)item.AvgMarks,
+                            Class_Status = item.ClassStatus,
+                            Study_Hours = (float)item.Commitment,
+                            Father_s_Highest_Education_Level = (float)model.UserInfo.FathersEduLevel,
+                            Mother_s_Highest_Education_Level = (float)model.UserInfo.MothersEduLevel
+                        },item.SubjectId);
+
+                        if (prediction != null)
+                        {
+                            _context.PredictedResults.Add(new PredictedResultModel
+                            {
+                                UserId = user.Id,
+                                SubjectId = item.SubjectId,
+                                UpdatedOn = DateTime.Now,
+                                A = prediction.A,
+                                B = prediction.B,
+                                C = prediction.C,
+                                S = prediction.S,
+                                W = prediction.W,
+                            });
+                        }
                     };
                     _context.SaveChanges();
                     await transaction.CommitAsync();

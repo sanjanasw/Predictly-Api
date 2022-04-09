@@ -1,0 +1,153 @@
+﻿{
+  "TrainingTime": 10,
+  "Scenario": "Classification",
+  "DataSource": {
+    "Type": "TabularFile",
+    "Version": 1,
+    "FilePath": "D:\\User\\Desktop\\Predictly Data - Subject 5.csv",
+    "Delimiter": ",",
+    "DecimalMarker": ".",
+    "HasHeader": true,
+    "ColumnProperties": [
+      {
+        "ColumnName": "Father's Highest Education Level",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Mother's Highest Education Level",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Actual Result",
+        "ColumnPurpose": "Label",
+        "ColumnDataFormat": "String",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Class Status",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Boolean",
+        "IsCategorical": false,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Average Previous Marks",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": false,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Study Hours",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      }
+    ]
+  },
+  "Environment": {
+    "Type": "LocalCPU",
+    "Version": 1
+  },
+  "RunHistory": {
+    "Version": 0,
+    "Type": "Result",
+    "Trials": [
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "SdcaMaximumEntropyMulti",
+        "Score": 0.2379333087547279,
+        "RuntimeInSeconds": 0.19499999284744263
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "LbfgsMaximumEntropyMulti",
+        "Score": 0.681269127855061,
+        "RuntimeInSeconds": 0.17599999904632568
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "LbfgsLogisticRegressionOva",
+        "Score": 0.638624254713331,
+        "RuntimeInSeconds": 0.28099998831748962
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "FastTreeOva",
+        "Score": 0.84386736521119732,
+        "RuntimeInSeconds": 2.6549999713897705
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "SdcaLogisticRegressionOva",
+        "Score": 0.22856218932389222,
+        "RuntimeInSeconds": 0.70800000429153442
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "FastForestOva",
+        "Score": 0.86867445770477114,
+        "RuntimeInSeconds": 2.0889999866485596
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "LightGbmMulti",
+        "Score": 0.87664793305982547,
+        "RuntimeInSeconds": 0.17000000178813934
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "SdcaMaximumEntropyMulti",
+        "Score": 0.22862074070505262,
+        "RuntimeInSeconds": 0.17000000178813934
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "LbfgsMaximumEntropyMulti",
+        "Score": 0.81382895932361909,
+        "RuntimeInSeconds": 0.33100000023841858
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "FastTreeOva",
+        "Score": 0.86630150989203325,
+        "RuntimeInSeconds": 2.1809999942779541
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "LbfgsLogisticRegressionOva",
+        "Score": 0.50696730615713714,
+        "RuntimeInSeconds": 0.26600000262260437
+      }
+    ],
+    "Pipeline": "{\"parameter\":{\r\n  \"0\": {\r\n    \"OutputColumnNames\": [\r\n      \"Father's Highest Education Level\",\r\n      \"Mother's Highest Education Level\",\r\n      \"Average Previous Marks\",\r\n      \"Study Hours\"\r\n    ],\r\n    \"InputColumnNames\": [\r\n      \"Father's Highest Education Level\",\r\n      \"Mother's Highest Education Level\",\r\n      \"Average Previous Marks\",\r\n      \"Study Hours\"\r\n    ]\r\n  },\r\n  \"1\": {\r\n    \"OutputColumnNames\": [\r\n      \"Class Status\"\r\n    ],\r\n    \"InputColumnNames\": [\r\n      \"Class Status\"\r\n    ]\r\n  },\r\n  \"2\": {\r\n    \"InputColumnNames\": [\r\n      \"Father's Highest Education Level\",\r\n      \"Mother's Highest Education Level\",\r\n      \"Average Previous Marks\",\r\n      \"Study Hours\",\r\n      \"Class Status\"\r\n    ],\r\n    \"OutputColumnName\": \"Features\"\r\n  },\r\n  \"3\": {\r\n    \"OutputColumnName\": \"Actual Result\",\r\n    \"InputColumnName\": \"Actual Result\"\r\n  },\r\n  \"4\": {\r\n    \"NumberOfLeaves\": 4,\r\n    \"MinimumExampleCountPerLeaf\": 20,\r\n    \"LearningRate\": 1.0,\r\n    \"NumberOfTrees\": 4,\r\n    \"SubsampleFraction\": 1.0,\r\n    \"MaximumBinCountPerFeature\": 256,\r\n    \"FeatureFraction\": 1.0,\r\n    \"L1Regularization\": 2E-10,\r\n    \"L2Regularization\": 1.0,\r\n    \"LabelColumnName\": \"Actual Result\",\r\n    \"FeatureColumnName\": \"Features\"\r\n  },\r\n  \"5\": {\r\n    \"OutputColumnName\": \"PredictedLabel\",\r\n    \"InputColumnName\": \"PredictedLabel\"\r\n  }\r\n},\"estimators\":[\"ReplaceMissingValues\",\"ConvertType\",\"Concatenate\",\"MapValueToKey\",\"LightGbmMulti\",\"MapKeyToValue\"]}",
+    "MetricName": "MicroAccuracy"
+  },
+  "Type": "TrainingConfig",
+  "Version": 1
+}

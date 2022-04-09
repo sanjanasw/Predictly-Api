@@ -1,0 +1,111 @@
+﻿{
+  "TrainingTime": 50,
+  "Scenario": "Classification",
+  "DataSource": {
+    "Type": "TabularFile",
+    "Version": 1,
+    "FilePath": "D:\\User\\Desktop\\Predictly Data - Subject 4.csv",
+    "Delimiter": ",",
+    "DecimalMarker": ".",
+    "HasHeader": true,
+    "ColumnProperties": [
+      {
+        "ColumnName": "Father's Highest Education Level",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Mother's Highest Education Level",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Actual Result",
+        "ColumnPurpose": "Label",
+        "ColumnDataFormat": "String",
+        "IsCategorical": false,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Class Status",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Boolean",
+        "IsCategorical": false,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Average Previous Marks",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": false,
+        "Type": "Column",
+        "Version": 1
+      },
+      {
+        "ColumnName": "Study Hours",
+        "ColumnPurpose": "Feature",
+        "ColumnDataFormat": "Single",
+        "IsCategorical": true,
+        "Type": "Column",
+        "Version": 1
+      }
+    ]
+  },
+  "Environment": {
+    "Type": "LocalCPU",
+    "Version": 1
+  },
+  "RunHistory": {
+    "Version": 0,
+    "Type": "Result",
+    "Trials": [
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "SdcaMaximumEntropyMulti",
+        "Score": 0.49002507934109973,
+        "RuntimeInSeconds": 0.15899999439716339
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "FastForestOva",
+        "Score": 0.86350398270310968,
+        "RuntimeInSeconds": 20.361000061035156
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "LightGbmMulti",
+        "Score": 0.86074168169051712,
+        "RuntimeInSeconds": 0.19799999892711639
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "SdcaLogisticRegressionOva",
+        "Score": 0.36280012019171559,
+        "RuntimeInSeconds": 0.61699998378753662
+      },
+      {
+        "Version": 0,
+        "Type": "Trial",
+        "TrainerName": "SdcaMaximumEntropyMulti",
+        "Score": 0.28019576095298637,
+        "RuntimeInSeconds": 0.16200000047683716
+      }
+    ],
+    "Pipeline": "{\"parameter\":{\r\n  \"0\": {\r\n    \"OutputColumnNames\": [\r\n      \"Father's Highest Education Level\",\r\n      \"Mother's Highest Education Level\",\r\n      \"Average Previous Marks\",\r\n      \"Study Hours\"\r\n    ],\r\n    \"InputColumnNames\": [\r\n      \"Father's Highest Education Level\",\r\n      \"Mother's Highest Education Level\",\r\n      \"Average Previous Marks\",\r\n      \"Study Hours\"\r\n    ]\r\n  },\r\n  \"1\": {\r\n    \"OutputColumnNames\": [\r\n      \"Class Status\"\r\n    ],\r\n    \"InputColumnNames\": [\r\n      \"Class Status\"\r\n    ]\r\n  },\r\n  \"2\": {\r\n    \"InputColumnNames\": [\r\n      \"Father's Highest Education Level\",\r\n      \"Mother's Highest Education Level\",\r\n      \"Average Previous Marks\",\r\n      \"Study Hours\",\r\n      \"Class Status\"\r\n    ],\r\n    \"OutputColumnName\": \"Features\"\r\n  },\r\n  \"3\": {\r\n    \"OutputColumnName\": \"Actual Result\",\r\n    \"InputColumnName\": \"Actual Result\"\r\n  },\r\n  \"4\": {\r\n    \"NumberOfTrees\": 4,\r\n    \"NumberOfLeaves\": 4,\r\n    \"FeatureFraction\": 1.0,\r\n    \"LabelColumnName\": \"Actual Result\",\r\n    \"FeatureColumnName\": \"Features\"\r\n  },\r\n  \"5\": {\r\n    \"OutputColumnName\": \"PredictedLabel\",\r\n    \"InputColumnName\": \"PredictedLabel\"\r\n  }\r\n},\"estimators\":[\"ReplaceMissingValues\",\"ConvertType\",\"Concatenate\",\"MapValueToKey\",\"FastForestOva\",\"MapKeyToValue\"]}",
+    "MetricName": "MicroAccuracy"
+  },
+  "Type": "TrainingConfig",
+  "Version": 1
+}
