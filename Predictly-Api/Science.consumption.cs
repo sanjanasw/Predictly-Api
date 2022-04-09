@@ -1,17 +1,16 @@
 ﻿using Microsoft.ML;
-using System;
-using System.IO;
-using Predictly_Api.Models;
-using System.Collections.Generic;
 using Microsoft.ML.Data;
+using System;
 using System.Linq;
+using System.IO;
+using System.Collections.Generic;
+using Predictly_Api.Models;
 
 namespace Predictly_Api
 {
-    public partial class Sinhala
+    public partial class Science
     {
-        private static string MLNetModelPath = Path.GetFullPath(Path.Combine("PredictionModels", "Sinhala.zip"));
-
+        private static string MLNetModelPath = Path.GetFullPath("Science.zip");
 
         public static readonly Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>> PredictEngine = new Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>>(() => CreatePredictEngine(), true);
 

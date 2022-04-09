@@ -37,6 +37,8 @@ namespace Predictly_Api.Services
                         return FormatResult(Science.Predict(model));
                     case 6:
                         return FormatResult(Mathematics.Predict(model));
+                    case 7:
+                        return FormatResult(Commerce.Predict(model));
                     default:
                         break;
                 }

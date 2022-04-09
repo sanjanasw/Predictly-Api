@@ -8,10 +8,10 @@ using Predictly_Api.Models;
 
 namespace Predictly_Api
 {
-    public partial class Commerce
+    public partial class English
     {
-        private static string MLNetModelPath = Path.GetFullPath(Path.Combine("PredictionModels", "Commerce.zip"));
 
+        private static string MLNetModelPath = Path.GetFullPath("English.zip");
 
         public static readonly Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>> PredictEngine = new Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>>(() => CreatePredictEngine(), true);
 
