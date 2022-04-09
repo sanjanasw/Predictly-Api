@@ -749,16 +749,21 @@ namespace Predictly_Api.Controllers
         }
 
         [HttpPost("Predict")]
-        public ResultViewModel Predict(PredictionModelInput model, [FromQuery] int subjectId)
+        public async Task<ActionResult> Predict(PredictionModelInput model)
         {
             try
             {
-                return _predictionService.GetPrediction(model, subjectId);
+                var result =  Buddhism.Predict(model);
+                if(result == null)
+                {
+                    return NotFound();
+                }
+                return Ok(result);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Prediction Error");
-                throw ex;
+                return BadRequest(ex.Message);
             }
         }
     }
