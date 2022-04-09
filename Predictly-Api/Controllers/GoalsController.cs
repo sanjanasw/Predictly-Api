@@ -17,17 +17,17 @@ using Predictly_Api.ViewModels.Goal;
 namespace Predictly_Api.Controllers
 {
     [Authorize]
-    [Route("goal")]
+    [Route("goals")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]
-    public class GoalController : ControllerBase
+    public class GoalsController : ControllerBase
     {
         private readonly UserManager<ApplicationUserModel> _userManager;
         private readonly ApplicationDbContext _context;
-        private readonly ILogger<GoalController> _logger;
+        private readonly ILogger<GoalsController> _logger;
 
-        public GoalController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<GoalController> logger)
+        public GoalsController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<GoalsController> logger)
         {
             _userManager = userManager;
             _context = context;

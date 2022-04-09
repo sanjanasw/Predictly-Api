@@ -739,7 +739,7 @@ namespace Predictly_Api.Controllers
                 {
                     case "verify":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/confirm-email?userid={_user.Id}&token={_token}";
-                        subject = "Sign-up Verification Vaccination Management System - Verify Email";
+                        subject = "Sign-up Verification PREDICTLY - Verify Email";
                         html =
                         $@" <center><img
                                 style=""width: 40%""
@@ -768,7 +768,7 @@ namespace Predictly_Api.Controllers
                         break;
                     case "resetPass":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
-                        subject = "Vaccination Management System - Reset password";
+                        subject = "PREDICTLY - Reset password";
                         html = $@" <center>
                                 <img
                                 style=""width: 40%""
@@ -800,7 +800,7 @@ namespace Predictly_Api.Controllers
                             </center>";
                         break;
                     case "verified":
-                        subject = "Sign-up Verification Vaccination Management System";
+                        subject = "Sign-up Verification PREDICTLY";
                         html =
                         $@" <center><img
                                 style=""width: 40%""
@@ -830,7 +830,7 @@ namespace Predictly_Api.Controllers
                                 </a></center>";
                         break;
                     case "resetted":
-                        subject = "Password Reset Successfull";
+                        subject = "PREDICTLY - Password Reset Successful";
                         html =
                         $@" <center>
                                 <img
@@ -839,7 +839,7 @@ namespace Predictly_Api.Controllers
                                 alt=''
                                 />
                             <h2>
-                                Password Resetted Successfully!
+                                Password Resetted Successfully
                             </h2>
                             <br />
                                 <a
@@ -861,7 +861,7 @@ namespace Predictly_Api.Controllers
                         break;
                     case "newUser":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/new-user-setup?userid={_user.Id}&token={_token}";
-                        subject = "Vaccination Management System - New User Invitation";
+                        subject = "PREDICTLY - New User Invitation";
                         html =
                         $@" <center>
                                 <img
@@ -891,7 +891,7 @@ namespace Predictly_Api.Controllers
                             </center>";
                         break;
                     case "newUserSetup":
-                        subject = "Password Setup Successfull";
+                        subject = "PREDICTLY - Password Setup Successful";
                         html =
                         $@" <center>
                                 <img
@@ -922,7 +922,7 @@ namespace Predictly_Api.Controllers
                         </center>";
                         break;
                     case "passwordChanged":
-                        subject = "Password Change Successfull";
+                        subject = "PREDICTLY - Password Change Successful";
                         html =
                         $@" <center><img
                                 style=""width: 40%""
