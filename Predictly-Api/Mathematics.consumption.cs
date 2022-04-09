@@ -1,16 +1,16 @@
 ﻿using Microsoft.ML;
-using System;
-using System.IO;
-using Predictly_Api.Models;
-using System.Collections.Generic;
 using Microsoft.ML.Data;
+using System;
 using System.Linq;
+using System.IO;
+using System.Collections.Generic;
+using Predictly_Api.Models;
 
 namespace Predictly_Api
 {
-    public partial class Buddhism
+    public partial class Mathematics
     {
-        private static string MLNetModelPath = Path.GetFullPath(Path.Combine("PredictionModels","Buddhism.zip"));
+        private static string MLNetModelPath = Path.GetFullPath("Mathematics.zip");
 
         public static readonly Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>> PredictEngine = new Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>>(() => CreatePredictEngine(), true);
 
@@ -18,7 +18,7 @@ namespace Predictly_Api
         /// Use this method to predict on <see cref="PredictionModelInput"/>.
         /// </summary>
         /// <param name="input">model input.</param>
-        /// <returns><seealso cref=" PredictionModelOutput"/></returns>
+        /// <returns><seealso cref="PredictionModelOutput"/></returns>
         public static Dictionary<string, float> Predict(PredictionModelInput input)
         {
             var predEngine = PredictEngine.Value;

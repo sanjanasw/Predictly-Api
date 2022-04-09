@@ -45,4 +45,88 @@
   <ItemGroup>
     <Folder Include="Filters\" />
   </ItemGroup>
+  <ItemGroup Label="Buddhism">
+    <None Include="Buddhism.consumption.cs">
+      <DependentUpon>Buddhism.mbconfig</DependentUpon>
+    </None>
+    <None Include="Buddhism.training.cs">
+      <DependentUpon>Buddhism.mbconfig</DependentUpon>
+    </None>
+    <None Include="Buddhism.zip">
+      <DependentUpon>Buddhism.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Sinhala">
+    <None Include="Sinhala.consumption.cs">
+      <DependentUpon>Sinhala.mbconfig</DependentUpon>
+    </None>
+    <None Include="Sinhala.training.cs">
+      <DependentUpon>Sinhala.mbconfig</DependentUpon>
+    </None>
+    <None Include="Sinhala.zip">
+      <DependentUpon>Sinhala.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="English">
+    <None Include="English.consumption.cs">
+      <DependentUpon>English.mbconfig</DependentUpon>
+    </None>
+    <None Include="English.training.cs">
+      <DependentUpon>English.mbconfig</DependentUpon>
+    </None>
+    <None Include="English.zip">
+      <DependentUpon>English.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="History">
+    <None Include="History.consumption.cs">
+      <DependentUpon>History.mbconfig</DependentUpon>
+    </None>
+    <None Include="History.training.cs">
+      <DependentUpon>History.mbconfig</DependentUpon>
+    </None>
+    <None Include="History.zip">
+      <DependentUpon>History.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Science">
+    <None Include="Science.consumption.cs">
+      <DependentUpon>Science.mbconfig</DependentUpon>
+    </None>
+    <None Include="Science.training.cs">
+      <DependentUpon>Science.mbconfig</DependentUpon>
+    </None>
+    <None Include="Science.zip">
+      <DependentUpon>Science.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Mathematics">
+    <None Include="Mathematics.consumption.cs">
+      <DependentUpon>Mathematics.mbconfig</DependentUpon>
+    </None>
+    <None Include="Mathematics.training.cs">
+      <DependentUpon>Mathematics.mbconfig</DependentUpon>
+    </None>
+    <None Include="Mathematics.zip">
+      <DependentUpon>Mathematics.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Commerce">
+    <None Include="Commerce.consumption.cs">
+      <DependentUpon>Commerce.mbconfig</DependentUpon>
+    </None>
+    <None Include="Commerce.training.cs">
+      <DependentUpon>Commerce.mbconfig</DependentUpon>
+    </None>
+    <None Include="Commerce.zip">
+      <DependentUpon>Commerce.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
