@@ -45,6 +45,18 @@
   <ItemGroup>
     <Folder Include="Filters\" />
   </ItemGroup>
+  <ItemGroup Label="Mathematics">
+    <None Include="Mathematics.consumption.cs">
+      <DependentUpon>Mathematics.mbconfig</DependentUpon>
+    </None>
+    <None Include="Mathematics.training.cs">
+      <DependentUpon>Mathematics.mbconfig</DependentUpon>
+    </None>
+    <None Include="Mathematics.zip">
+      <DependentUpon>Mathematics.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
   <ItemGroup Label="Buddhism">
     <None Include="Buddhism.consumption.cs">
       <DependentUpon>Buddhism.mbconfig</DependentUpon>
@@ -105,18 +117,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup Label="Mathematics">
-    <None Include="Mathematics.consumption.cs">
-      <DependentUpon>Mathematics.mbconfig</DependentUpon>
-    </None>
-    <None Include="Mathematics.training.cs">
-      <DependentUpon>Mathematics.mbconfig</DependentUpon>
-    </None>
-    <None Include="Mathematics.zip">
-      <DependentUpon>Mathematics.mbconfig</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
   <ItemGroup Label="Commerce">
     <None Include="Commerce.consumption.cs">
       <DependentUpon>Commerce.mbconfig</DependentUpon>
@@ -126,6 +126,30 @@
     </None>
     <None Include="Commerce.zip">
       <DependentUpon>Commerce.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="OrientedMusic">
+    <None Include="OrientedMusic.consumption.cs">
+      <DependentUpon>OrientedMusic.mbconfig</DependentUpon>
+    </None>
+    <None Include="OrientedMusic.training.cs">
+      <DependentUpon>OrientedMusic.mbconfig</DependentUpon>
+    </None>
+    <None Include="OrientedMusic.zip">
+      <DependentUpon>OrientedMusic.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="ICT">
+    <None Include="ICT.consumption.cs">
+      <DependentUpon>ICT.mbconfig</DependentUpon>
+    </None>
+    <None Include="ICT.training.cs">
+      <DependentUpon>ICT.mbconfig</DependentUpon>
+    </None>
+    <None Include="ICT.zip">
+      <DependentUpon>ICT.mbconfig</DependentUpon>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
