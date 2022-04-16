@@ -37,16 +37,16 @@ namespace Predictly_Api.Services
             var predictedResults = new List<UserSubjectPredictionViewModel>();
             foreach (var result in results)
             {
-                IDictionary<double, Results> predictions = new Dictionary<double, Results>();
-                predictions.Add(new KeyValuePair<double, Results>((double)result.A, Results.A));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.B, Results.B));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.C, Results.C));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.S, Results.S));
-                predictions.Add(new KeyValuePair<double, Results>((double)result.W, Results.W));
-                var max = predictions.OrderByDescending(x => x.Key).First();
+                IDictionary<Results, double> predictions = new Dictionary<Results, double>();
+                predictions.Add(new KeyValuePair<Results, double>(Results.A, (double)result.A));
+                predictions.Add(new KeyValuePair<Results, double>(Results.B, (double)result.B));
+                predictions.Add(new KeyValuePair<Results, double>(Results.C, (double)result.C));
+                predictions.Add(new KeyValuePair<Results, double>(Results.S, (double)result.S));
+                predictions.Add(new KeyValuePair<Results, double>(Results.W, (double)result.W));
+                var max = predictions.OrderByDescending(x => x.Value).First();
                 predictedResults.Add(new UserSubjectPredictionViewModel
                 {
-                    PredictedResult = max.Value,
+                    PredictedResult = max.Key,
                     SubjectId = result.SubjectId,
                     UserId = result.UserId,
                 });

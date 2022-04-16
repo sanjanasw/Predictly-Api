@@ -4,6 +4,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Net.Mime;
+using System.Security.Claims;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
@@ -14,13 +15,11 @@ using Microsoft.EntityFrameworkCore;
 using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
 using Predictly_Api.Enums;
-using System.Security.Claims;
 using Predictly_Api.Services;
-using Predictly_Api.ViewModels.Dashboard;
 
 namespace Predictly_Api.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("user")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
@@ -745,25 +744,6 @@ namespace Predictly_Api.Controllers
                     _logger.LogError(ex, "Error occcured in DELETE: user/study-data.");
                     throw;
                 }
-            }
-        }
-
-        [HttpPost("Predict")]
-        public async Task<ActionResult> Predict(PredictionModelInput model)
-        {
-            try
-            {
-                var result =  Buddhism.Predict(model);
-                if(result == null)
-                {
-                    return NotFound();
-                }
-                return Ok(result);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Prediction Error");
-                return BadRequest(ex.Message);
             }
         }
     }

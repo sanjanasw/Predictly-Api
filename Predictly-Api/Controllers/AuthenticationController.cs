@@ -368,6 +368,51 @@ namespace Predictly_Api.Controllers
         }
 
         /// <summary>
+        /// Resend Confirmation Email
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /auth/resend-confirm-email
+        ///     {
+        ///         "email": "sanjanasw99@gmail.com",
+        ///     }
+        /// If user havent received verification email on register this end-point can used to resend it, a confirmation email is sending to the email you entered in the registration form. You have to Confirm the email by clicking the confirm button before the link expired(link will expired after 24 hours).
+        /// </remarks>
+        /// <response code="200">Returns success message</response>
+        /// <response code="400">Already confirmed email</response>
+        /// <response code="404">User not found</response>
+        [HttpPost("resend-confirm-email")]
+        public async Task<ActionResult<ResponseModel>> ResendConfirmEmail(ResendEmailViewModel model)
+        {
+            try
+            {
+                ApplicationUserModel user = await _userManager.FindByEmailAsync(model.Email);
+
+                if (user == null)
+                {
+                    return StatusCode(StatusCodes.Status404NotFound, new ResponseModel { Status = "Error", Message = "User Not Found!" });
+                }
+
+                if (user.EmailConfirmed)
+                {
+                    return StatusCode(StatusCodes.Status400BadRequest, new ResponseModel { Status = "Error", Message = "Already email confirmed by user!" });
+                }
+
+                string confirmationToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                SendEmail("verify", null, user, confirmationToken);
+                _logger.LogInformation(string.Format("{0}, confirmation email resent!", model.Email));
+                return Ok(new ResponseModel { Status = "Success", Message = "Verification email resent successfully!" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error occcured in auth/resend-confirm-email.");
+                throw;
+            }
+        }
+
+
+        /// <summary>
         /// Confirm email
         /// </summary>
         /// <remarks>
@@ -739,7 +784,7 @@ namespace Predictly_Api.Controllers
                 {
                     case "verify":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/confirm-email?userid={_user.Id}&token={_token}";
-                        subject = "Sign-up Verification Vaccination Management System - Verify Email";
+                        subject = "Sign-up Verification PREDICTLY - Verify Email";
                         html =
                         $@" <center><img
                                 style=""width: 40%""
@@ -768,7 +813,7 @@ namespace Predictly_Api.Controllers
                         break;
                     case "resetPass":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
-                        subject = "Vaccination Management System - Reset password";
+                        subject = "PREDICTLY - Reset password";
                         html = $@" <center>
                                 <img
                                 style=""width: 40%""
@@ -800,7 +845,7 @@ namespace Predictly_Api.Controllers
                             </center>";
                         break;
                     case "verified":
-                        subject = "Sign-up Verification Vaccination Management System";
+                        subject = "Sign-up Verification PREDICTLY";
                         html =
                         $@" <center><img
                                 style=""width: 40%""
@@ -830,7 +875,7 @@ namespace Predictly_Api.Controllers
                                 </a></center>";
                         break;
                     case "resetted":
-                        subject = "Password Reset Successfull";
+                        subject = "PREDICTLY - Password Reset Successful";
                         html =
                         $@" <center>
                                 <img
@@ -839,7 +884,7 @@ namespace Predictly_Api.Controllers
                                 alt=''
                                 />
                             <h2>
-                                Password Resetted Successfully!
+                                Password Resetted Successfully
                             </h2>
                             <br />
                                 <a
@@ -861,7 +906,7 @@ namespace Predictly_Api.Controllers
                         break;
                     case "newUser":
                         verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/new-user-setup?userid={_user.Id}&token={_token}";
-                        subject = "Vaccination Management System - New User Invitation";
+                        subject = "PREDICTLY - New User Invitation";
                         html =
                         $@" <center>
                                 <img
@@ -891,7 +936,7 @@ namespace Predictly_Api.Controllers
                             </center>";
                         break;
                     case "newUserSetup":
-                        subject = "Password Setup Successfull";
+                        subject = "PREDICTLY - Password Setup Successful";
                         html =
                         $@" <center>
                                 <img
@@ -922,7 +967,7 @@ namespace Predictly_Api.Controllers
                         </center>";
                         break;
                     case "passwordChanged":
-                        subject = "Password Change Successfull";
+                        subject = "PREDICTLY - Password Change Successful";
                         html =
                         $@" <center><img
                                 style=""width: 40%""
