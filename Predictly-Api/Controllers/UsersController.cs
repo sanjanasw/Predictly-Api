@@ -19,7 +19,7 @@ using Predictly_Api.Services;
 
 namespace Predictly_Api.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [Route("user")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
