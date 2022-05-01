@@ -140,7 +140,7 @@ namespace Predictly_Test
         }
 
         [Fact]
-        public void GetClassStatusDistribution()
+        public void GetClassStatusDistributionTest()
         {
             var classData = new List<SubjectClassStatusViewModel>()
             {

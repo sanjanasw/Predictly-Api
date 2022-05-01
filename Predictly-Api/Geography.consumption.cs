@@ -8,9 +8,9 @@ using Predictly_Api.Models;
 
 namespace Predictly_Api
 {
-    public partial class English
+    public partial class Geography
     {
-        private static string MLNetModelPath = Path.GetFullPath("English.zip");
+        private static string MLNetModelPath = Path.GetFullPath("Geography.zip");
 
         public static readonly Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>> PredictEngine = new Lazy<PredictionEngine<PredictionModelInput, PredictionModelOutput>>(() => CreatePredictEngine(), true);
 

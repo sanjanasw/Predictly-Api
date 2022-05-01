@@ -1,10 +1,10 @@
 ﻿using System.Linq;
-using Microsoft.ML.Trainers.LightGbm;
+using Microsoft.ML.Trainers.FastTree;
 using Microsoft.ML;
 
 namespace Predictly_Api
 {
-    public partial class English
+    public partial class Art
     {
         public static ITransformer RetrainPipeline(MLContext context, IDataView trainData)
         {
@@ -26,7 +26,7 @@ namespace Predictly_Api
                                     .Append(mlContext.Transforms.Conversion.ConvertType(@"Class Status", @"Class Status"))      
                                     .Append(mlContext.Transforms.Concatenate(@"Features", new []{@"Father's Highest Education Level",@"Mother's Highest Education Level",@"Average Previous Marks",@"Study Hours",@"Class Status"}))      
                                     .Append(mlContext.Transforms.Conversion.MapValueToKey(outputColumnName:@"Actual Result",inputColumnName:@"Actual Result"))      
-                                    .Append(mlContext.MulticlassClassification.Trainers.LightGbm(new LightGbmMulticlassTrainer.Options(){NumberOfLeaves=4,NumberOfIterations=6,MinimumExampleCountPerLeaf=20,LearningRate=0.884736893021567,LabelColumnName=@"Actual Result",FeatureColumnName=@"Features",ExampleWeightColumnName=null,Booster=new GradientBooster.Options(){SubsampleFraction=0.500040982653742,FeatureFraction=0.982449635845245,L1Regularization=5.41261598791082E-10,L2Regularization=0.999999776672986},MaximumBinCountPerFeature=495}))      
+                                    .Append(mlContext.MulticlassClassification.Trainers.OneVersusAll(binaryEstimator:mlContext.BinaryClassification.Trainers.FastTree(new FastTreeBinaryTrainer.Options(){NumberOfLeaves=4,MinimumExampleCountPerLeaf=11,NumberOfTrees=7,MaximumBinCountPerFeature=633,FeatureFraction=0.99999999,LearningRate=0.21437643438769,LabelColumnName=@"Actual Result",FeatureColumnName=@"Features"}),labelColumnName: @"Actual Result"))      
                                     .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName:@"PredictedLabel",inputColumnName:@"PredictedLabel"));
 
             return pipeline;

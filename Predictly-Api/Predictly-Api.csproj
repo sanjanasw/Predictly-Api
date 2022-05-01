@@ -81,18 +81,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup Label="English">
-    <None Include="English.consumption.cs">
-      <DependentUpon>English.mbconfig</DependentUpon>
-    </None>
-    <None Include="English.training.cs">
-      <DependentUpon>English.mbconfig</DependentUpon>
-    </None>
-    <None Include="English.zip">
-      <DependentUpon>English.mbconfig</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
   <ItemGroup Label="History">
     <None Include="History.consumption.cs">
       <DependentUpon>History.mbconfig</DependentUpon>
@@ -150,6 +138,90 @@
     </None>
     <None Include="ICT.zip">
       <DependentUpon>ICT.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="English">
+    <None Include="English.consumption.cs">
+      <DependentUpon>English.mbconfig</DependentUpon>
+    </None>
+    <None Include="English.training.cs">
+      <DependentUpon>English.mbconfig</DependentUpon>
+    </None>
+    <None Include="English.zip">
+      <DependentUpon>English.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Geography">
+    <None Include="Geography.consumption.cs">
+      <DependentUpon>Geography.mbconfig</DependentUpon>
+    </None>
+    <None Include="Geography.training.cs">
+      <DependentUpon>Geography.mbconfig</DependentUpon>
+    </None>
+    <None Include="Geography.zip">
+      <DependentUpon>Geography.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="CivicEducation">
+    <None Include="CivicEducation.consumption.cs">
+      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
+    </None>
+    <None Include="CivicEducation.training.cs">
+      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
+    </None>
+    <None Include="CivicEducation.zip">
+      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Tamil">
+    <None Include="Tamil.consumption.cs">
+      <DependentUpon>Tamil.mbconfig</DependentUpon>
+    </None>
+    <None Include="Tamil.training.cs">
+      <DependentUpon>Tamil.mbconfig</DependentUpon>
+    </None>
+    <None Include="Tamil.zip">
+      <DependentUpon>Tamil.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Art">
+    <None Include="Art.consumption.cs">
+      <DependentUpon>Art.mbconfig</DependentUpon>
+    </None>
+    <None Include="Art.training.cs">
+      <DependentUpon>Art.mbconfig</DependentUpon>
+    </None>
+    <None Include="Art.zip">
+      <DependentUpon>Art.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Dancing">
+    <None Include="Dancing.consumption.cs">
+      <DependentUpon>Dancing.mbconfig</DependentUpon>
+    </None>
+    <None Include="Dancing.training.cs">
+      <DependentUpon>Dancing.mbconfig</DependentUpon>
+    </None>
+    <None Include="Dancing.zip">
+      <DependentUpon>Dancing.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Helth">
+    <None Include="Helth.consumption.cs">
+      <DependentUpon>Helth.mbconfig</DependentUpon>
+    </None>
+    <None Include="Helth.training.cs">
+      <DependentUpon>Helth.mbconfig</DependentUpon>
+    </None>
+    <None Include="Helth.zip">
+      <DependentUpon>Helth.mbconfig</DependentUpon>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

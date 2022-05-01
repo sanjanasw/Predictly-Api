@@ -32,8 +32,7 @@ namespace Predictly_Api.ViewModels.Authentication
         [Required(ErrorMessage = "Gender is required")]
         public Genders Gender { get; set; }
 
-        [Required(ErrorMessage = "School is required")]
-        public int SchoolId { get; set; }
+        public int? SchoolId { get; set; }
 
         public int BSub1 { get; set; }
 
