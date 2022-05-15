@@ -22,7 +22,7 @@ using Predictly_Api.ViewModels.User;
 
 namespace Predictly_Api.Controllers
 {
-    [Route("auth")]
+    [Route("api/auth")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]
@@ -199,13 +199,13 @@ namespace Predictly_Api.Controllers
                         LastName = model.UserInfo.LastName,
                         Email = model.UserInfo.Email,
                         Gender = model.UserInfo.Gender,
-                        SchoolId = model.UserInfo.SchoolId,
+                        SchoolId = model.UserInfo.SchoolId??0,
                         FathersEduLevel = model.UserInfo.FathersEduLevel,
                         MothersEduLevel = model.UserInfo.MothersEduLevel,
                         BSub1 = model.UserInfo.BSub1,
                         BSub2 = model.UserInfo.BSub2,
                         BSub3 = model.UserInfo.BSub3,
-                          OLYear = model.UserInfo.OLYear,
+                        OLYear = model.UserInfo.OLYear,
                         SecurityStamp = Guid.NewGuid().ToString(),
                     };
                     var result = await _userManager.CreateAsync(user, model.UserInfo.Password);
@@ -783,7 +783,7 @@ namespace Predictly_Api.Controllers
                 switch (_type)
                 {
                     case "verify":
-                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/confirm-email?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"https://app.predictly.live/auth/confirm-email?userid={_user.Id}&token={_token}";
                         subject = "Sign-up Verification PREDICTLY - Verify Email";
                         html =
                         $@" <center><img
@@ -812,7 +812,7 @@ namespace Predictly_Api.Controllers
                                 </a></center>";
                         break;
                     case "resetPass":
-                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/reset-password?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"https://app.predictly.live/auth/reset-password?userid={_user.Id}&token={_token}";
                         subject = "PREDICTLY - Reset password";
                         html = $@" <center>
                                 <img
@@ -869,7 +869,7 @@ namespace Predictly_Api.Controllers
                                     text-transform: uppercase;
                                     text-decoration: none;
                                 ""
-                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                href=""https://app.predictly.live/auth/login""
                                 >
                                 Continue to Login
                                 </a></center>";
@@ -898,14 +898,14 @@ namespace Predictly_Api.Controllers
                                     text-transform: uppercase;
                                     text-decoration: none;
                                 ""
-                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                href=""https://app.predictly.live/auth/login""
                                 >
                                 Continue to Login
                                 </a>
                             </center>";
                         break;
                     case "newUser":
-                        verifyUrl = $"https://predictly.z13.web.core.windows.net/auth/new-user-setup?userid={_user.Id}&token={_token}";
+                        verifyUrl = $"https://app.predictly.live/auth/new-user-setup?userid={_user.Id}&token={_token}";
                         subject = "PREDICTLY - New User Invitation";
                         html =
                         $@" <center>
@@ -960,7 +960,7 @@ namespace Predictly_Api.Controllers
                                     text-transform: uppercase;
                                     text-decoration: none;
                                 ""
-                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                href=""https://app.predictly.live/auth/login""
                                 >
                                 Continue to Login
                                 </a>
@@ -989,7 +989,7 @@ namespace Predictly_Api.Controllers
                                     text-transform: uppercase;
                                     text-decoration: none;
                                 ""
-                                href=""https://predictly.z13.web.core.windows.net/auth/login""
+                                href=""https://app.predictly.live/auth/login""
                                 >
                                 Continue to Login
                                 </a><center>";

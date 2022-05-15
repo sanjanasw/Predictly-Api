@@ -4,7 +4,7 @@ using Microsoft.ML;
 
 namespace Predictly_Api
 {
-    public partial class History
+    public partial class Dancing
     {
         public static ITransformer RetrainPipeline(MLContext context, IDataView trainData)
         {
@@ -26,7 +26,7 @@ namespace Predictly_Api
                                     .Append(mlContext.Transforms.Conversion.ConvertType(@"Class Status", @"Class Status"))      
                                     .Append(mlContext.Transforms.Concatenate(@"Features", new []{@"Father's Highest Education Level",@"Mother's Highest Education Level",@"Average Previous Marks",@"Study Hours",@"Class Status"}))      
                                     .Append(mlContext.Transforms.Conversion.MapValueToKey(outputColumnName:@"Actual Result",inputColumnName:@"Actual Result"))      
-                                    .Append(mlContext.MulticlassClassification.Trainers.OneVersusAll(binaryEstimator:mlContext.BinaryClassification.Trainers.FastTree(new FastTreeBinaryTrainer.Options(){NumberOfLeaves=4,MinimumExampleCountPerLeaf=2,NumberOfTrees=14,MaximumBinCountPerFeature=37,FeatureFraction=0.976010201216025,LearningRate=0.150606839935773,LabelColumnName=@"Actual Result",FeatureColumnName=@"Features"}),labelColumnName: @"Actual Result"))      
+                                    .Append(mlContext.MulticlassClassification.Trainers.OneVersusAll(binaryEstimator:mlContext.BinaryClassification.Trainers.FastForest(new FastForestBinaryTrainer.Options(){NumberOfTrees=9347,NumberOfLeaves=4,FeatureFraction=0.6303639F,LabelColumnName=@"Actual Result",FeatureColumnName=@"Features"}),labelColumnName:@"Actual Result"))      
                                     .Append(mlContext.Transforms.Conversion.MapKeyToValue(outputColumnName:@"PredictedLabel",inputColumnName:@"PredictedLabel"));
 
             return pipeline;

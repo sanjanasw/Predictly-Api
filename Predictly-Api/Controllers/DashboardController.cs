@@ -16,7 +16,7 @@ using Predictly_Api.ViewModels.Dashboard;
 namespace Predictly_Api.Controllers
 {
     [Authorize]
-    [Route("student-dashboard")]
+    [Route("api/student-dashboard")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]

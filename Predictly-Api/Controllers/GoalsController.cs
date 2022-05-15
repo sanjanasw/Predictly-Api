@@ -17,7 +17,7 @@ using Predictly_Api.ViewModels.Goal;
 namespace Predictly_Api.Controllers
 {
     [Authorize]
-    [Route("goals")]
+    [Route("api/goals")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]

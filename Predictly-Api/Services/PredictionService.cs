@@ -39,6 +39,22 @@ namespace Predictly_Api.Services
                         return FormatResult(Mathematics.Predict(model));
                     case 7:
                         return FormatResult(Commerce.Predict(model));
+                    case 8:
+                        return FormatResult(Geography.Predict(model));
+                    case 9:
+                        return FormatResult(CivicEducation.Predict(model));
+                    case 10:
+                        return FormatResult(Tamil.Predict(model));
+                    case 11:
+                        return FormatResult(OrientedMusic.Predict(model));
+                    case 12:
+                        return FormatResult(Dancing.Predict(model));
+                    case 13:
+                        return FormatResult(Art.Predict(model));
+                    case 14:
+                        return FormatResult(ICT.Predict(model));
+                    case 15:
+                        return FormatResult(Helth.Predict(model));
                     default:
                         break;
                 }

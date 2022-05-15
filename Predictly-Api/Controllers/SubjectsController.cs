@@ -8,7 +8,7 @@ using Predictly_Api.ViewModels.Subject;
 
 namespace Predictly_Api.Controllers
 {
-    [Route("subject")]
+    [Route("api/subject")]
     [ApiController]
     public class SubjectsController : ControllerBase
     {

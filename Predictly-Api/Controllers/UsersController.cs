@@ -20,7 +20,7 @@ using Predictly_Api.Services;
 namespace Predictly_Api.Controllers
 {
     [Authorize]
-    [Route("user")]
+    [Route("api/user")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]
@@ -560,6 +560,32 @@ namespace Predictly_Api.Controllers
                         UserId = loggedInUser.Id
                     };
                     _context.StudyData.Add(studyData);
+
+                    var prediction = _predictionService.GetPrediction(new PredictionModelInput
+                    {
+                        Average_Previous_Marks = (float)model.AvgMarks,
+                        Class_Status = model.ClassStatus,
+                        Study_Hours = (float)model.Commitment,
+                        Father_s_Highest_Education_Level = (float)loggedInUser.FathersEduLevel,
+                        Mother_s_Highest_Education_Level = (float)loggedInUser.MothersEduLevel
+                    }, model.SubjectId);
+                    if (prediction != null)
+                    {
+                        var prevPrediction = _context.PredictedResults.Where(x => x.SubjectId == model.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
+                        if (prevPrediction != null)
+                            _context.PredictedResults.Remove(prevPrediction);
+                        _context.PredictedResults.Add(new PredictedResultModel
+                        {
+                            UserId = loggedInUserId,
+                            SubjectId = model.SubjectId,
+                            UpdatedOn = DateTime.Now,
+                            A = prediction.A,
+                            B = prediction.B,
+                            C = prediction.C,
+                            S = prediction.S,
+                            W = prediction.W,
+                        });
+                    }
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
