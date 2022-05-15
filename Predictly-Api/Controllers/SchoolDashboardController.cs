@@ -15,7 +15,7 @@ using System.Threading.Tasks;
 namespace Predictly_Api.Controllers
 {
     [Authorize]
-    [Route("school-dashboard")]
+    [Route("api/school-dashboard")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]
@@ -34,6 +34,11 @@ namespace Predictly_Api.Controllers
 
         }
 
+        /// <summary>
+        /// Get schools dashboard data.
+        /// </summary>
+        /// <response code="200">Returns dashboard data</response>
+        /// <response code="404">User not found</response>
         [Authorize(Roles ="Staff")]
         [HttpGet]
         public async Task<ActionResult<SchoolDashboardViewModel>> GetDashboardPredictions()

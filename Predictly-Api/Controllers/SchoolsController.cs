@@ -8,7 +8,7 @@ using Predictly_Api.ViewModels.School;
 
 namespace Predictly_Api.Controllers
 {
-    [Route("school")]
+    [Route("api/school")]
     [ApiController]
     public class SchoolsController : ControllerBase
     {

@@ -81,18 +81,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup Label="History">
-    <None Include="History.consumption.cs">
-      <DependentUpon>History.mbconfig</DependentUpon>
-    </None>
-    <None Include="History.training.cs">
-      <DependentUpon>History.mbconfig</DependentUpon>
-    </None>
-    <None Include="History.zip">
-      <DependentUpon>History.mbconfig</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
   <ItemGroup Label="Science">
     <None Include="Science.consumption.cs">
       <DependentUpon>Science.mbconfig</DependentUpon>
@@ -165,30 +153,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
-  <ItemGroup Label="CivicEducation">
-    <None Include="CivicEducation.consumption.cs">
-      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
-    </None>
-    <None Include="CivicEducation.training.cs">
-      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
-    </None>
-    <None Include="CivicEducation.zip">
-      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup Label="Tamil">
-    <None Include="Tamil.consumption.cs">
-      <DependentUpon>Tamil.mbconfig</DependentUpon>
-    </None>
-    <None Include="Tamil.training.cs">
-      <DependentUpon>Tamil.mbconfig</DependentUpon>
-    </None>
-    <None Include="Tamil.zip">
-      <DependentUpon>Tamil.mbconfig</DependentUpon>
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
   <ItemGroup Label="Art">
     <None Include="Art.consumption.cs">
       <DependentUpon>Art.mbconfig</DependentUpon>
@@ -222,6 +186,42 @@
     </None>
     <None Include="Helth.zip">
       <DependentUpon>Helth.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="CivicEducation">
+    <None Include="CivicEducation.consumption.cs">
+      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
+    </None>
+    <None Include="CivicEducation.training.cs">
+      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
+    </None>
+    <None Include="CivicEducation.zip">
+      <DependentUpon>CivicEducation.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="Tamil">
+    <None Include="Tamil.consumption.cs">
+      <DependentUpon>Tamil.mbconfig</DependentUpon>
+    </None>
+    <None Include="Tamil.training.cs">
+      <DependentUpon>Tamil.mbconfig</DependentUpon>
+    </None>
+    <None Include="Tamil.zip">
+      <DependentUpon>Tamil.mbconfig</DependentUpon>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Label="History">
+    <None Include="History.consumption.cs">
+      <DependentUpon>History.mbconfig</DependentUpon>
+    </None>
+    <None Include="History.training.cs">
+      <DependentUpon>History.mbconfig</DependentUpon>
+    </None>
+    <None Include="History.zip">
+      <DependentUpon>History.mbconfig</DependentUpon>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>

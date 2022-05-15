@@ -22,7 +22,7 @@ using Predictly_Api.ViewModels.User;
 
 namespace Predictly_Api.Controllers
 {
-    [Route("auth")]
+    [Route("api/auth")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]

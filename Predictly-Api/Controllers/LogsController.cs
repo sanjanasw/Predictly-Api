@@ -11,7 +11,7 @@ using Predictly_Api.ViewModels.Logs;
 namespace Predictly_Api.Controllers
 {
     [Authorize(Roles = "Admin")]
-    [Route("logs")]
+    [Route("api/logs")]
     [ApiController]
     [Produces(MediaTypeNames.Application.Json)]
     [Consumes(MediaTypeNames.Application.Json)]
