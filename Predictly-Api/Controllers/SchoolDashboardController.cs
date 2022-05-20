@@ -35,13 +35,13 @@ namespace Predictly_Api.Controllers
         }
 
         /// <summary>
-        /// Get schools dashboard data.
+        /// Get schools dashboard data. [Access: Staff only]
         /// </summary>
         /// <response code="200">Returns dashboard data</response>
         /// <response code="404">User not found</response>
-        [Authorize(Roles ="Staff")]
-        [HttpGet]
-        public async Task<ActionResult<SchoolDashboardViewModel>> GetDashboardPredictions()
+        [Authorize(Roles = "Staff")]
+        [HttpGet("{year}")]
+        public async Task<ActionResult<SchoolDashboardViewModel>> GetDashboardPredictions([FromRoute]int year)
         {
             var accessToken = HttpContext.GetTokenAsync("access_token");
             var token = new JwtSecurityTokenHandler().ReadJwtToken(await accessToken) as JwtSecurityToken;
@@ -52,10 +52,10 @@ namespace Predictly_Api.Controllers
                 return NotFound(new ResponseModel { Status = "Error", Message = "Logged in user not found!" });
             }
             var subjects = _context.Subjects.ToList();
-            var students = _context.Users.Where(x => x.SchoolId == loggedInUser.SchoolId && x.OLYear > 0).ToList();
+            var students = _context.Users.Where(x => x.SchoolId == loggedInUser.SchoolId && x.OLYear == year).ToList();
             var results = _context.PredictedResults.Where(x => students.Select(x => x.Id).Contains(x.UserId)).ToList();
             var studyData = _context.StudyData.Where(x => students.Select(x => x.Id).Contains(x.UserId))
-                .Select(x => new SubjectClassStatusViewModel { SubjectId = x.SubjectId, ClassStatus = x.ClassStatus}).ToList();
+                .Select(x => new SubjectClassStatusViewModel { SubjectId = x.SubjectId, ClassStatus = x.ClassStatus }).ToList();
 
             var output = new SchoolDashboardViewModel()
             {
@@ -71,10 +71,27 @@ namespace Predictly_Api.Controllers
                       Value = students.Where(x => x.Gender == Genders.Female).Count(),
                   }
                 },
-                ClassStatus = _predictionAnalizingService.GetClassStatus(studyData,subjects),
+                ClassStatus = _predictionAnalizingService.GetClassStatus(studyData, subjects),
 
             };
             return Ok(output);
+        }
+
+        /// <summary>
+        /// Get Accessible O/L years list. [Access: Staff only]
+        /// </summary>
+        /// <response code="200">Returns years</response>
+        /// <response code="400">No years in db</response>
+        [Authorize(Roles = "Staff")]
+        [HttpGet("years-list")]
+        public ActionResult<List<int>> GetStudentsOLYears()
+        {
+            var years = _context.Users.Where(x => x.OLYear > 0).Select(x => x.OLYear).Distinct().ToList();
+            if (years.Count() > 0)
+            {
+                return Ok(years);
+            }
+            return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
         }
     }
 }
