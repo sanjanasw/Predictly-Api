@@ -86,7 +86,7 @@ namespace Predictly_Api.Controllers
         [HttpGet("years-list")]
         public ActionResult<List<int>> GetStudentsOLYears()
         {
-            var years = _context.Users.Where(x => x.OLYear > 0).Select(x => x.OLYear).Distinct().ToList();
+            var years = _context.Users.Where(x => x.OLYear > 0 && x.EmailConfirmed).Select(x => x.OLYear).Distinct().ToList();
             if (years.Count() > 0)
             {
                 return Ok(years);
