@@ -104,7 +104,7 @@ namespace Predictly_Api.Controllers
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" }); ;
                 }
 
-                var usersList = await _userManager.Users.ToListAsync();
+                var usersList = await _userManager.Users.Where(x => x.EmailConfirmed).ToListAsync();
                 var users = new List<StudentViewModel>();
 
                 if (role == UserRoles.Admin.ToString())
