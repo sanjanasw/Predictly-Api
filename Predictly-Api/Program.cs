@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using Serilog.Events;
+using System;
 
 namespace Predictly_Api
 {
@@ -10,13 +11,24 @@ namespace Predictly_Api
     {
         public static void Main(string[] args)
         {
-            // Configure logs
-            IConfigurationRoot configuration = new ConfigurationBuilder()
-                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true).Build();
-            Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(configuration)
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning).CreateLogger();
-            CreateHostBuilder(args).Build().Run();
+            //Read Configuration from appSettings    
+            var config = new ConfigurationBuilder().AddJsonFile("appsettings.json").Build();
+            //Initialize Logger    
+            Log.Logger = new LoggerConfiguration().ReadFrom.Configuration(config).CreateLogger();
+            try
+            {
+                Log.Information("Application Starting.##############3");
+                CreateHostBuilder(args).Build().Run();
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "The Application failed to start.######333");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
+            //CreateHostBuilder(args).Build().Run(); 
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>

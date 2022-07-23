@@ -9,6 +9,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Predictly_Api.Helpers;
+using Predictly_Api.Middlewares;
 using Predictly_Api.Models;
 using Predictly_Api.Services;
 using System;
@@ -31,6 +32,9 @@ namespace Predictly_Api
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+
+            //Auto mapper config
+            services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddDbContext<ApplicationDbContext>(options => options.UseSqlServer(Configuration.GetConnectionString("connectionString")));
 
@@ -118,6 +122,8 @@ namespace Predictly_Api
 
             app.UseAuthentication();
             app.UseAuthorization();
+
+            app.UseAccessLoggerMiddleware();
 
             app.UseEndpoints(endpoints =>
             {
