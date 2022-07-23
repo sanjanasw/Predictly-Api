@@ -16,6 +16,7 @@ using Predictly_Api.Models;
 using Predictly_Api.ViewModels.User;
 using Predictly_Api.Enums;
 using Predictly_Api.Services;
+using AutoMapper;
 
 namespace Predictly_Api.Controllers
 {
@@ -30,13 +31,15 @@ namespace Predictly_Api.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UsersController> _logger;
         private readonly IPredictionService _predictionService;
+        private readonly IMapper _mapper;
 
-        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger, IPredictionService predictionService)
+        public UsersController(UserManager<ApplicationUserModel> userManager, ApplicationDbContext context, ILogger<UsersController> logger, IPredictionService predictionService, IMapper mapper)
         {
             _userManager = userManager;
             _context = context;
             _logger = logger;
             _predictionService = predictionService;
+            _mapper = mapper;
         }
 
         /// <summary>
@@ -58,19 +61,21 @@ namespace Predictly_Api.Controllers
                 {
                     return NotFound(new ResponseModel { Status = "Error", Message = "User not found!" });
                 }
- 
-                return Ok(new UserViewModel
-                {
-                    Id = loggedInUser.Id,
-                    Username = loggedInUser.UserName,
-                    FirstName = loggedInUser.FirstName,
-                    LastName = loggedInUser.LastName,
-                    Gender = loggedInUser.Gender,
-                    Email = loggedInUser.Email,
-                    SchoolId = loggedInUser.SchoolId,
-                    OLYear = loggedInUser.OLYear,
-                    Role = string.Join(",", _userManager.GetRolesAsync(loggedInUser).Result.ToArray()),
-                });
+
+                //return Ok(new UserViewModel
+                //{
+                //    Id = loggedInUser.Id,
+                //    Username = loggedInUser.UserName,
+                //    FirstName = loggedInUser.FirstName,
+                //    LastName = loggedInUser.LastName,
+                //    Gender = loggedInUser.Gender,
+                //    Email = loggedInUser.Email,
+                //    SchoolId = loggedInUser.SchoolId,
+                //    OLYear = loggedInUser.OLYear,
+                //    Role = string.Join(",", _userManager.GetRolesAsync(loggedInUser).Result.ToArray()),
+                //});
+                var x = _mapper.Map<UserViewModel>(loggedInUser);
+                return Ok(x);
             }
             catch (Exception ex)
             {
