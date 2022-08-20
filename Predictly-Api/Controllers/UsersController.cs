@@ -17,6 +17,8 @@ using Predictly_Api.ViewModels.User;
 using Predictly_Api.Enums;
 using Predictly_Api.Services;
 using AutoMapper;
+using Predictly_Api.Helpers;
+using Newtonsoft.Json;
 
 namespace Predictly_Api.Controllers
 {
@@ -186,7 +188,7 @@ namespace Predictly_Api.Controllers
                 var subjectsList = _context.Subjects.ToList();
                 foreach (var item in currentStatus)
                 {
-                    var subjectInfo = subjectsList.Where(x => x.Id == item.SubjectId).Select(y => new {y.Name , y.BucketType}).FirstOrDefault();
+                    var subjectInfo = subjectsList.Where(x => x.Id == item.SubjectId).Select(y => new { y.Name, y.BucketType }).FirstOrDefault();
                     item.Subject = subjectInfo.Name;
                     item.BucketType = subjectInfo.BucketType;
                 }
@@ -376,7 +378,7 @@ namespace Predictly_Api.Controllers
 
             if (id != model.Id)
             {
-                return BadRequest(new ResponseModel { Status = "Error", Message = "Something went wrong!" });
+                throw new HumanErrorException("route id and model id not matching!");
             }
 
             try
@@ -679,9 +681,9 @@ namespace Predictly_Api.Controllers
                         Father_s_Highest_Education_Level = (float)loggedInUser.FathersEduLevel,
                         Mother_s_Highest_Education_Level = (float)loggedInUser.MothersEduLevel
                     }, model.SubjectId);
-                    if(prediction != null)
+                    if (prediction != null)
                     {
-                        var prevPrediction = _context.PredictedResults.Where(x => x.SubjectId ==model.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
+                        var prevPrediction = _context.PredictedResults.Where(x => x.SubjectId == model.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
                         if (prevPrediction != null)
                             _context.PredictedResults.Remove(prevPrediction);
                         _context.PredictedResults.Add(new PredictedResultModel
@@ -721,7 +723,7 @@ namespace Predictly_Api.Controllers
         public async Task<ActionResult> DeleteStudyData(int id)
         {
             using (var transaction = await _context.Database.BeginTransactionAsync())
-           {
+            {
                 try
                 {
                     var accessToken = HttpContext.GetTokenAsync("access_token");
@@ -759,7 +761,7 @@ namespace Predictly_Api.Controllers
                         _context.Goals.Remove(goal);
 
                     var predictedData = _context.PredictedResults.Where(x => x.SubjectId == studyData.SubjectId && x.UserId == loggedInUserId).FirstOrDefault();
-                    if(predictedData != null)
+                    if (predictedData != null)
                         _context.PredictedResults.Remove(predictedData);
 
                     await _userManager.UpdateAsync(loggedInUser);

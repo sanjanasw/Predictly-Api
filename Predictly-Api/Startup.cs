@@ -124,6 +124,7 @@ namespace Predictly_Api
             app.UseAuthorization();
 
             app.UseAccessLoggerMiddleware();
+            app.UseExceptionHandlerMiddleware();
 
             app.UseEndpoints(endpoints =>
             {
